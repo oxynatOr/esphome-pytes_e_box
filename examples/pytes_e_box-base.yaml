@@ -1,0 +1,14 @@
+uart:
+  tx_pin: GPIO5
+  rx_pin: GPIO6
+  baud_rate: 115200
+  rx_buffer_size: 1024
+  id: uart01   
+
+pytes_e_box:
+  - id: pvbatt
+    uart_id: uart01
+    update_interval: 30s
+    batteries: 2
+    poll_timeout: 4s 
+    command_idle_time: 150ms

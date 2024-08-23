@@ -1,0 +1,32 @@
+packages:
+  pytes_ebox_1: !include 
+    file: usr/projects/pytesebox-monitor.yaml
+    vars:
+      pytes_e_box_id: pvbatt
+      battery_num: 1
+      cell_prefix: "Cell"
+      battery_prefix: "Battery"
+  pytes_ebox_2: !include 
+    file: usr/projects/pytesebox-monitor.yaml
+    vars:
+      pytes_e_box_id: pvbatt
+      battery_num: 2
+      cell_prefix: "Cell"
+      battery_prefix: "Battery"    
+      
+uart:
+  tx_pin: GPIO5
+  rx_pin: GPIO6
+  baud_rate: 115200
+  rx_buffer_size: 1024
+  id: uart01   
+
+pytes_e_box:
+  - id: pvbatt
+    uart_id: uart01
+    update_interval: 30s
+    batteries: 2
+    poll_timeout: 4s 
+    command_idle_time: 150ms
+
+
