@@ -1,0 +1,59 @@
+uart:
+  tx_pin: GPIO5
+  rx_pin: GPIO6
+  baud_rate: 115200
+  rx_buffer_size: 1024
+  id: uart01   
+
+pytes_e_box:
+  - id: pvbatt
+    uart_id: uart01
+    update_interval: 30s
+    batteries: 2
+    poll_timeout: 4s 
+    command_idle_time: 150ms
+
+sensor:
+  - platform: pytes_e_box
+    pytes_e_box_id: pvbatt
+    battery: 1
+    voltage:
+      name: "Battery 1 Voltage"
+    current:
+      name: "Battery 1 Current"
+    coulomb:
+      name: "Battery 1 State of Charge"
+    temperature:
+      name: "Battery 1 Temperature"
+  - platform: pytes_e_box
+    pytes_e_box_id: pvbatt
+    battery: 2
+    voltage:
+      name: "Battery 2 Voltage"
+    current:
+      name: "Battery 2 Current"
+    coulomb:
+      name: "Battery 2 State of Charge"
+    temperature:
+      name: "Battery 2 Temperature"
+
+textsensor:
+  - platform: pytes_e_box
+    pytes_e_box_id: pvbatt
+    battery: 1
+    barcode:
+      name: "Battery 1 Barcode"
+    dev_type:
+      name: "Battery 1 Device Type"
+    firm_version:
+      name: "Battery 1 Firm Version"
+      
+  - platform: pytes_e_box
+    pytes_e_box_id: pvbatt
+    battery: 2
+    barcode:
+      name: "Battery 2 Barcode"
+    dev_type:
+      name: "Battery 2 Device Type"
+    firm_version:
+      name: "Battery 2 Firm Version"
