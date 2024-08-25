@@ -68,11 +68,28 @@ void PytesEBoxComponent::add_polling_command_(const char *command, int _index, E
   command_queue_max_++;
 }
 
+uint8_t PytesEBoxComponent::send_command_again() {
+  this->clear_uart_buffer();
+  this->buffer_index_read_ = 0;
+  this->buffer_index_write_ = 0;
+  this->clear_uart_buffer();
+  this->pwr_index_l = {};
+  this->bat_index_l = {};
+  this->pwr_data_l = {};
+  this->write_str(this->cmd_queue_[this->command_queue_position_].command.c_str());
+  this->write_str("\n");
+  this->command_retries_++;
+  this->state_ = STATE_POLL;
+  ESP_LOGD(TAG, "Retry command from queue: %s from index: %d", this->cmd_queue_[this->command_queue_position_].command.c_str(), this->command_queue_position_);
+  return 1;
+}
+
 uint8_t PytesEBoxComponent::send_next_command_() {
     if (this->cmd_queue_[this->command_queue_position_].command != "") {
     const char *command = this->cmd_queue_[this->command_queue_position_].command.c_str();
     this->buffer_index_read_ = 0;
     this->buffer_index_write_ = 0;
+    this->command_retries_ = 0;
     this->clear_uart_buffer();
     this->pwr_index_l = {};
     this->bat_index_l = {};
@@ -110,7 +127,7 @@ void PytesEBoxComponent::loop() {
   if (millis() - this->last_poll_ > this->polling_timeout_) {
       this->last_poll_ = millis();
       const char *command = this->cmd_queue_[this->command_queue_position_].command.c_str();
-      ESP_LOGE(TAG, "timeout command from queue: %s", command);
+      ESP_LOGE(TAG, "timeout command from queue: %s with %d retries", command, this->command_retries_);
       this->clear_uart_buffer();
       //this->command_queue_position_ = (this->command_queue_position_+1) % COMMAND_QUEUE_LENGTH;
       this->state_ = STATE_SEND_NEXT_COMMAND;
@@ -121,7 +138,7 @@ void PytesEBoxComponent::loop() {
 
   /** command queue */
   if (this->state_ == STATE_SEND_NEXT_COMMAND) {
-  if (millis() - this->last_poll_ <= this->command_idle_time_) { return; }
+  if (millis() - this->last_poll_ <= this->command_idle_time_) { return; }  //will only work if the idle_time is >50ms
 
     this->command_queue_position_ = (this->command_queue_position_+1) % COMMAND_QUEUE_LENGTH;
     if (this->command_queue_position_ == this->command_queue_max_) { 
@@ -213,7 +230,8 @@ void PytesEBoxComponent::loop() {
         case CMD_NIL:
         case CMD_ERROR:
         default:
-          this->state_ = STATE_SEND_NEXT_COMMAND;
+          this->send_command_again();
+          //this->state_ = STATE_SEND_NEXT_COMMAND;
           return;
       }      
         if (this->isLineComplete(this->buffer_[buffer_index_read_]) > 0) {
@@ -241,8 +259,9 @@ void PytesEBoxComponent::loop() {
     } else {
       ESP_LOGE(TAG, "No command parsed: %s ",this->buffer_[0].c_str()); 
       //this->state_ = STATE_IDLE;
-      this->state_ = STATE_SEND_NEXT_COMMAND;
-      return;
+      //this->state_ = STATE_SEND_NEXT_COMMAND;
+      //return;
+      this->send_command_again();
       }
   }
 
