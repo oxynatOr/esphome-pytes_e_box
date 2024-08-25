@@ -30,8 +30,14 @@ If you have multiple batteries you need to connect to the master battery's conso
 | GPIO 5 | TX | ***6*** | RX |
 | 3v3 | VCC | ***NC*** | Power |
 
- 
-    
+
+Tested devcies:
+------------------------
+| Manufacturer | Devcie |
+| --- | --- |
+| Pytes | E-BOX-48100R-C |
+
+
 Component/Hub
 -------------
 
