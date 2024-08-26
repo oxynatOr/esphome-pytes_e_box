@@ -64,23 +64,19 @@ void PytesEBoxComponent::add_polling_command_(const char *command, int _index, E
   _cmd_.index = _index;
   _cmd_.identifier = polling_command;
   _cmd_.length = strlen(command);  
-  cmd_queue_.push_back(_cmd_);
-  command_queue_max_++;
+  this->cmd_queue_.push_back(_cmd_);
+  this->command_queue_max_++;
 }
 
-uint8_t PytesEBoxComponent::send_command_again() {
-  this->clear_uart_buffer();
+uint8_t PytesEBoxComponent::send_command_again() { 
   this->buffer_index_read_ = 0;
   this->buffer_index_write_ = 0;
   this->clear_uart_buffer();
-  this->pwr_index_l = {};
-  this->bat_index_l = {};
-  this->pwr_data_l = {};
   this->write_str(this->cmd_queue_[this->command_queue_position_].command.c_str());
-  this->write_str("\n");
-  this->command_retries_++;
+  this->write_str("\n");  
   this->state_ = STATE_POLL;
-  ESP_LOGD(TAG, "Retry command from queue: %s from index: %d", this->cmd_queue_[this->command_queue_position_].command.c_str(), this->command_queue_position_);
+  ESP_LOGI(TAG, "Retry command from queue: %s from index: %d (%d)", this->cmd_queue_[this->command_queue_position_].command.c_str(), this->command_queue_position_,this->command_retries_);
+  this->command_retries_++;
   return 1;
 }
 
@@ -172,12 +168,13 @@ void PytesEBoxComponent::loop() {
         case CMD_NIL:
         case CMD_ERROR:
         default:
-          this->state_ = STATE_SEND_NEXT_COMMAND;
+          this->state_ = STATE_SEND_NEXT_COMMAND;          
           break;
       }
   }
     this->state_ = STATE_SEND_NEXT_COMMAND;
-    if (this->command_queue_position_ == this->command_queue_max_) { this->state_ = STATE_IDLE; }
+    ESP_LOGVV(TAG, "Command Complete, switch to STATE_POLL_COMPLETE");
+    if (this->command_queue_position_ == this->command_queue_max_) { this->state_ = STATE_IDLE; ESP_LOGVV(TAG, "Command Complete, switch to STATE_IDLE"); }
     return;
   }
 
@@ -224,9 +221,9 @@ void PytesEBoxComponent::loop() {
           this->buffer_[buffer_index_read_] = std::regex_replace(this->buffer_[buffer_index_read_], pattern, "");
           break;
           }
-        case CMD_PWR: { this->state_ = STATE_COMMAND; return; }
-        case CMD_BAT_INDEX: { this->state_ = STATE_COMMAND; return; }
-        case CMD_BAT: { this->state_ = STATE_COMMAND; return; }
+        case CMD_PWR:
+        case CMD_BAT_INDEX:
+        case CMD_BAT: { this->state_ = STATE_COMMAND; ESP_LOGVV(TAG, "Command Complete, switch to STATE_COMMAND"); return; }
         case CMD_NIL:
         case CMD_ERROR:
         default:
@@ -237,6 +234,7 @@ void PytesEBoxComponent::loop() {
         if (this->isLineComplete(this->buffer_[buffer_index_read_]) > 0) {
         this->state_ = STATE_COMMAND;
         this->buffer_index_read_ = (3) % NUM_BUFFERS;
+        ESP_LOGVV(TAG, "Command Complete, switch to STATE_COMMAND");
         return;
       }
       //ESP_LOGD(TAG, "(%d) %s",this->buffer_index_read_, buffer_[buffer_index_read_].c_str());
@@ -255,6 +253,7 @@ void PytesEBoxComponent::loop() {
       this->buffer_index_read_ = (3) % NUM_BUFFERS;
       ESP_LOGD(TAG, "parsed command -> %s [Battery: %i]",this->CommandtoString(_last_cmd).c_str(),
                     this->cmd_queue_[this->command_queue_position_].index);
+      ESP_LOGVV(TAG, "Command Complete, switch to STATE_POLL_DECODED");                    
       return;
     } else {
       ESP_LOGE(TAG, "No command parsed: %s ",this->buffer_[0].c_str()); 
@@ -275,6 +274,7 @@ void PytesEBoxComponent::loop() {
       if (this->isLineComplete(this->buffer_[buffer_index_write_]) > 0) {
           this->state_ = STATE_POLL_COMPLETE;
           ESP_LOGVV(TAG, "Data Complete");
+          ESP_LOGVV(TAG, "Command Complete, switch to STATE_POLL_COMPLETE");
         }
         this->buffer_index_write_ = (this->buffer_index_write_ + 1) % NUM_BUFFERS;
       } // readLine
