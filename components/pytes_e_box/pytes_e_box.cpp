@@ -266,7 +266,7 @@ void PytesEBoxComponent::loop() {
 
   /** pull all the serial data from buffer */
   if (this->state_ == STATE_POLL) {
-    if (this->available() < 0) { this->send_command_again(); }
+    //if (!this->available()) { this->send_command_again(); }
     while (this->available()) {
       static char buffer[MAX_DATA_LINE_LENGTH];
       if(readline(read(), buffer, MAX_DATA_LENGTH_BYTES) > 0) {
@@ -274,7 +274,8 @@ void PytesEBoxComponent::loop() {
         ESP_LOGV(TAG, "(%d) %s",this->buffer_index_write_, buffer);
       if (this->isLineComplete(this->buffer_[buffer_index_write_]) > 0) {
           this->state_ = STATE_POLL_COMPLETE;
-          ESP_LOGVV(TAG, "Data Complete");
+          //ESP_LOGVV(TAG, "Data Complete");
+          //if this->buffer_[2]"Invalid command or fail to excute."
           ESP_LOGVV(TAG, "Command Complete, switch to STATE_POLL_COMPLETE");
         }
         this->buffer_index_write_ = (this->buffer_index_write_ + 1) % NUM_BUFFERS;
