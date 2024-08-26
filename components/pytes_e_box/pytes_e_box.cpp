@@ -266,6 +266,7 @@ void PytesEBoxComponent::loop() {
 
   /** pull all the serial data from buffer */
   if (this->state_ == STATE_POLL) {
+    if (this->available() <= 0) { this->send_command_again(); }
     while (this->available()) {
       static char buffer[MAX_DATA_LINE_LENGTH];
       if(readline(read(), buffer, MAX_DATA_LENGTH_BYTES) > 0) {
