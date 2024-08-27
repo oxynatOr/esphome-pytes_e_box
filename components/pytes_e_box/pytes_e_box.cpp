@@ -69,15 +69,18 @@ void PytesEBoxComponent::add_polling_command_(const char *command, int _index, E
 }
 
 uint8_t PytesEBoxComponent::send_command_again() { 
-  this->buffer_index_read_ = 0;
-  this->buffer_index_write_ = 0;
-  this->clear_uart_buffer();
-  this->write_str(this->cmd_queue_[this->command_queue_position_].command.c_str());
-  this->write_str("\n");  
-  this->state_ = STATE_POLL;
-  ESP_LOGI(TAG, "Retry command from queue: %s from index: %d (%d)", this->cmd_queue_[this->command_queue_position_].command.c_str(), this->command_queue_position_,this->command_retries_);
-  this->command_retries_++;
-  return 1;
+  if (this->state_ == STATE_WAIT) { 
+    this->buffer_index_read_ = 0;
+    this->buffer_index_write_ = 0;
+    this->clear_uart_buffer();
+    this->write_str(this->cmd_queue_[this->command_queue_position_].command.c_str());
+    this->write_str("\n");  
+    this->state_ = STATE_POLL;
+    ESP_LOGI(TAG, "Retry command from queue: %s from index: %d (%d)", this->cmd_queue_[this->command_queue_position_].command.c_str(), this->command_queue_position_,this->command_retries_);
+    this->command_retries_++;
+    return 1;
+  } 
+  return 0;
 }
 
 uint8_t PytesEBoxComponent::send_next_command_() {
@@ -227,6 +230,7 @@ void PytesEBoxComponent::loop() {
         case CMD_NIL:
         case CMD_ERROR:
         default:
+          this->state_ = STATE_WAIT;
           this->send_command_again();
           //this->state_ = STATE_SEND_NEXT_COMMAND;
           return;
@@ -260,13 +264,19 @@ void PytesEBoxComponent::loop() {
       //this->state_ = STATE_IDLE;
       //this->state_ = STATE_SEND_NEXT_COMMAND;
       //return;
+      this->state_ = STATE_WAIT;
       this->send_command_again();
+      return;
       }
   }
 
   /** pull all the serial data from buffer */
   if (this->state_ == STATE_POLL) {
-    //if (!this->available()) { this->send_command_again(); }
+    if (this->available() < 0) { 
+      this->state_ = STATE_WAIT; 
+      this->send_command_again(); 
+      return; 
+      }
     while (this->available()) {
       static char buffer[MAX_DATA_LINE_LENGTH];
       if(readline(read(), buffer, MAX_DATA_LENGTH_BYTES) > 0) {
