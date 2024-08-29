@@ -15,12 +15,14 @@ static const uint8_t TEXT_SENSOR_BIG_LEN = 18;
 static const uint8_t TEXT_SENSOR_MAX_LEN = 60;
 
 enum ENUMCommand {
-  CMD_ERROR = -1,
-  CMD_NIL = 0,
-  CMD_PWR = 1,
-  CMD_PWR_INDEX = 2,
-  CMD_BAT = 3,
-  CMD_BAT_INDEX = 4,
+  CMD_ERROR         = 254,
+  CMD_NIL           = 0,
+  CMD_PWR           = 1,
+  CMD_PWR_INDEX     = 2,
+  CMD_BAT           = 3,
+  CMD_BAT_INDEX     = 4,
+  CMD_SOH           = 5,
+  CMD_SOH_INDEX     = 6,
 };
 
 
@@ -88,6 +90,8 @@ public:
   if ((command == "pwr") && (no_ >= 1)) { return CMD_PWR_INDEX; }
   if ((command == "bat") && (no_ == -1)) { return CMD_BAT; }
   if ((command == "bat") && (no_ >= 1)) { return CMD_BAT_INDEX; }
+  if ((command == "soh") && (no_ == -1)) { return CMD_SOH; }
+  if ((command == "soh") && (no_ >= 1)) { return CMD_SOH_INDEX; }  
   return CMD_NIL;
   }
 
@@ -108,6 +112,12 @@ public:
     case CMD_BAT: {
       return "Battery Data";
     }
+    case CMD_SOH: {
+      return "State of Health Data";
+    }
+    case CMD_SOH_INDEX: {
+      return "State of Health Data Index";
+    }        
     case CMD_ERROR: {
       return "ERROR?!";
     }

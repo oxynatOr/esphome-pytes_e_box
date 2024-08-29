@@ -3,6 +3,7 @@
 #include "esphome/core/helpers.h"
 #include <stdlib.h>
 #include <regex>
+#include "bms_commands.h"
 
 namespace esphome {
 namespace pytes_e_box {
@@ -47,6 +48,8 @@ void PytesEBoxComponent::setup() {
     this->add_polling_command_(cmd.c_str(),i,CMD_PWR_INDEX);
     cmd = "bat "+to_string(i);
     this->add_polling_command_(cmd.c_str(),i,CMD_BAT_INDEX);
+    cmd = "soh "+to_string(i);
+    this->add_polling_command_(cmd.c_str(),i,CMD_BAT_INDEX);    
   }  
   if (this->is_ready()) { this->state_ = STATE_IDLE; }
 }
@@ -167,7 +170,14 @@ void PytesEBoxComponent::loop() {
           listener->on_batn_line_read(&bat_index_l);
           break;
           }
+        case CMD_SOH_INDEX: {
+          //listener->on_sohn_line_read(&bat_index_l);
+          //break;
+          this->state_ = STATE_SEND_NEXT_COMMAND;          
+          break;          
+          }          
         case CMD_BAT:
+        case CMD_SOH:
         case CMD_NIL:
         case CMD_ERROR:
         default:
@@ -199,7 +209,17 @@ void PytesEBoxComponent::loop() {
           this->cmd_queue_[this->command_queue_position_].index);
           break;
           }
+        case CMD_SOH_INDEX: {
+          this->state_ = STATE_SEND_NEXT_COMMAND;
+          return;          
+          /*
+          this->processData_sohIndexLine(this->buffer_[this->buffer_index_read_],
+          this->cmd_queue_[this->command_queue_position_].index);
+          break;
+          */
+          }          
         case CMD_BAT:
+        case CMD_SOH:
         case CMD_NIL:
         case CMD_ERROR:
         default:
@@ -225,6 +245,8 @@ void PytesEBoxComponent::loop() {
           break;
           }
         case CMD_PWR:
+        case CMD_SOH:
+        case CMD_SOH_INDEX:
         case CMD_BAT_INDEX:
         case CMD_BAT: { this->state_ = STATE_COMMAND; ESP_LOGVV(TAG, "Command Complete, switch to STATE_COMMAND"); return; }
         case CMD_NIL:
