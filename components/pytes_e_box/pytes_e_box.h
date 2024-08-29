@@ -167,9 +167,12 @@ protected:
   uint32_t command_idle_time_;
   uint32_t found_battaries_in_system_;
   uint32_t last_poll_ = 0;
+  uint32_t command_retries_ = 0;
+
   std::string buffer_[NUM_BUFFERS];
   int buffer_index_write_ = 0;
   int buffer_index_read_ = 0;
+
 
   uint8_t state_ = 254;
   enum State {
@@ -193,6 +196,7 @@ protected:
   uint8_t command_queue_position_ = 0;
   uint8_t command_queue_max_ = 0;
   uint8_t send_next_command_();
+  uint8_t send_command_again();
 
   void processData_pwrLine(std::string &buffer);
   void processData_batIndexLine(std::string &buffer, int bat_num);
