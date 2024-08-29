@@ -3,7 +3,7 @@
 #include "esphome/core/helpers.h"
 #include <stdlib.h>
 #include <regex>
-#include "bms_commands.h"
+//#include "bms_commands.h"
 
 namespace esphome {
 namespace pytes_e_box {
