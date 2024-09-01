@@ -75,7 +75,8 @@ void PytesEBoxBatterySensor::on_pwr_line_read(PytesEBoxListener::pwr_LineContent
     this->voltage_sensor_->publish_state(((float) line->voltage) / 1000.0f);
   }
   if (this->current_sensor_ != nullptr) {
-    this->current_sensor_->publish_state(((float) line->current) / 1000.0f);
+    //this->current_sensor_->publish_state(((float) line->current) / 1000.0f);
+    this->current_sensor_->publish_state(((float) line->current));
   }
   if (this->temperature_sensor_ != nullptr) {
     this->temperature_sensor_->publish_state(((float) line->temperature) / 1000.0f);

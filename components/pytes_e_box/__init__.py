@@ -74,6 +74,7 @@ CV_NUM_CELLS = cv.int_range(0, 15)
 
 ##Custom 
 UNIT_AMPERE_HOURS = "Ah"
+UNIT_MILLI_AMPERE = "mA"
 
 pytes_e_box_ns = cg.esphome_ns.namespace("pytes_e_box")
 PytesEBoxComponent = pytes_e_box_ns.class_("PytesEBoxComponent", cg.PollingComponent, uart.UARTDevice)
