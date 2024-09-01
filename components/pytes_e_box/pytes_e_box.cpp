@@ -356,111 +356,111 @@ void PytesEBoxComponent::processData_pwrLine(std::string &buffer) {
 
 void PytesEBoxComponent::processData_pwrIndex(std::string &buffer, int bat_num) {  
 pwr_data_l.bat_num = bat_num;
-int i = this->buffer_index_read_;
+//int i = this->buffer_index_read_;
 
-  if (this->buffer_[i].rfind("SOC Voltage:", 0) == 0) {
-    sscanf(this->buffer_[i].c_str(),"SOC Voltage: %dmV",&pwr_data_l.SOCVoltage);
-    ESP_LOGV(TAG,"%s -> %d",this->buffer_[i].c_str(),pwr_data_l.SOCVoltage);
+  if (this->buffer_[this->buffer_index_read_].rfind("SOC Voltage:", 0) == 0) {
+    sscanf(this->buffer_[this->buffer_index_read_].c_str(),"SOC Voltage: %dmV",&pwr_data_l.SOCVoltage);
+    ESP_LOGV(TAG,"%s -> %d",this->buffer_[this->buffer_index_read_].c_str(),pwr_data_l.SOCVoltage);
   }
 
-  if (this->buffer_[i].rfind("Total Coulomb:", 0) == 0) {
-    sscanf(this->buffer_[i].c_str(),"Total Coulomb: %dmAS",&pwr_data_l.totalCoulomb);
-    ESP_LOGV(TAG,"%s -> %d",this->buffer_[i].c_str(),pwr_data_l.totalCoulomb);
+  if (this->buffer_[this->buffer_index_read_].rfind("Total Coulomb:", 0) == 0) {
+    sscanf(this->buffer_[this->buffer_index_read_].c_str(),"Total Coulomb: %dmAS",&pwr_data_l.totalCoulomb);
+    ESP_LOGV(TAG,"%s -> %d",this->buffer_[this->buffer_index_read_].c_str(),pwr_data_l.totalCoulomb);
   }
 
-  if (this->buffer_[i].rfind("Real Coulomb:", 0) == 0) {
-    sscanf(this->buffer_[i].c_str(),"Real Coulomb: %dmAH",&pwr_data_l.realCoulomb);
-    ESP_LOGV(TAG,"%s -> %d",this->buffer_[i].c_str(),pwr_data_l.realCoulomb);
+  if (this->buffer_[this->buffer_index_read_].rfind("Real Coulomb:", 0) == 0) {
+    sscanf(this->buffer_[this->buffer_index_read_].c_str(),"Real Coulomb: %dmAH",&pwr_data_l.realCoulomb);
+    ESP_LOGV(TAG,"%s -> %d",this->buffer_[this->buffer_index_read_].c_str(),pwr_data_l.realCoulomb);
   }
 
-  if (this->buffer_[i].rfind("Total Power In:", 0) == 0) { 
-    sscanf(this->buffer_[i].c_str(),"Total Power In: %dAS",&pwr_data_l.totalPowerIn);
-    ESP_LOGV(TAG,"%s -> %d",this->buffer_[i].c_str(),pwr_data_l.totalPowerIn);
+  if (this->buffer_[this->buffer_index_read_].rfind("Total Power In:", 0) == 0) { 
+    sscanf(this->buffer_[this->buffer_index_read_].c_str(),"Total Power In: %dAS",&pwr_data_l.totalPowerIn);
+    ESP_LOGV(TAG,"%s -> %d",this->buffer_[this->buffer_index_read_].c_str(),pwr_data_l.totalPowerIn);
   }
   
-  if (this->buffer_[i].rfind("Work Status:", 0) == 0) {
-    sscanf(this->buffer_[i].c_str(),"Work Status: %d",&pwr_data_l.workStatus);
-    ESP_LOGV(TAG,"%s -> %d",this->buffer_[i].c_str(),pwr_data_l.workStatus);
+  if (this->buffer_[this->buffer_index_read_].rfind("Work Status:", 0) == 0) {
+    sscanf(this->buffer_[this->buffer_index_read_].c_str(),"Work Status: %d",&pwr_data_l.workStatus);
+    ESP_LOGV(TAG,"%s -> %d",this->buffer_[this->buffer_index_read_].c_str(),pwr_data_l.workStatus);
   }
 
-  if (this->buffer_[i].rfind("Bat Num:", 0) == 0) {
-    sscanf(this->buffer_[i].c_str()," Bat Num: %d",&pwr_data_l.cells);
-    ESP_LOGV(TAG,"%s -> %d",this->buffer_[i].c_str(),pwr_data_l.cells);
+  if (this->buffer_[this->buffer_index_read_].rfind("Bat Num:", 0) == 0) {
+    sscanf(this->buffer_[this->buffer_index_read_].c_str()," Bat Num: %d",&pwr_data_l.cells);
+    ESP_LOGV(TAG,"%s -> %d",this->buffer_[this->buffer_index_read_].c_str(),pwr_data_l.cells);
   }
 
-  if (this->buffer_[i].rfind("Total Power Out :", 0) == 0) {
-    sscanf(this->buffer_[i].c_str(),"Total Power Out : %dAS ",&pwr_data_l.totalPowerOut);
-    ESP_LOGV(TAG,"%s -> %d",this->buffer_[i].c_str(),pwr_data_l.totalPowerOut);
+  if (this->buffer_[this->buffer_index_read_].rfind("Total Power Out :", 0) == 0) {
+    sscanf(this->buffer_[this->buffer_index_read_].c_str(),"Total Power Out : %dAS ",&pwr_data_l.totalPowerOut);
+    ESP_LOGV(TAG,"%s -> %d",this->buffer_[this->buffer_index_read_].c_str(),pwr_data_l.totalPowerOut);
   }
 
-  if (this->buffer_[i].rfind("Barcode:", 0) == 0) {
-    sscanf(this->buffer_[i].c_str()," Barcode: %[^\n]",pwr_data_l.Barcode);
-    ESP_LOGV(TAG,"%s -> %s",this->buffer_[i].c_str(),pwr_data_l.Barcode);
+  if (this->buffer_[this->buffer_index_read_].rfind("Barcode:", 0) == 0) {
+    sscanf(this->buffer_[this->buffer_index_read_].c_str()," Barcode: %[^\n]",pwr_data_l.Barcode);
+    ESP_LOGV(TAG,"%s -> %s",this->buffer_[this->buffer_index_read_].c_str(),pwr_data_l.Barcode);
   }
 
-  if (this->buffer_[i].rfind("Firm Version:", 0) == 0) {
-    sscanf(this->buffer_[i].c_str()," Firm Version: %[^\n]",pwr_data_l.FirmVersion); 
-    ESP_LOGV(TAG,"%s -> %s",this->buffer_[i].c_str(),pwr_data_l.FirmVersion);
+  if (this->buffer_[this->buffer_index_read_].rfind("Firm Version:", 0) == 0) {
+    sscanf(this->buffer_[this->buffer_index_read_].c_str(),"Firm Version: %[^\n\r]",pwr_data_l.FirmVersion); 
+    ESP_LOGV(TAG,"%s -> %s",this->buffer_[this->buffer_index_read_].c_str(),pwr_data_l.FirmVersion);
   }
 
-  if (this->buffer_[i].rfind("Coul. Status:", 0) == 0) {
-    sscanf(this->buffer_[i].c_str()," Coul. Status: %[^\n]",pwr_data_l.CoulStatus);
-    ESP_LOGV(TAG,"%s -> %s",this->buffer_[i].c_str(),pwr_data_l.CoulStatus);
+  if (this->buffer_[this->buffer_index_read_].rfind("Coul. Status:", 0) == 0) {
+    sscanf(this->buffer_[this->buffer_index_read_].c_str(),"Coul. Status: %[^\n]",pwr_data_l.CoulStatus);
+    ESP_LOGV(TAG,"%s -> %s",this->buffer_[this->buffer_index_read_].c_str(),pwr_data_l.CoulStatus);
   }
 
-  if (this->buffer_[i].rfind("Bat Status:", 0) == 0) {
-    sscanf(this->buffer_[i].c_str()," Bat Status: %[^\n]",pwr_data_l.BatStatus);
-    ESP_LOGV(TAG,"%s -> %s",this->buffer_[i].c_str(),pwr_data_l.BatStatus);
+  if (this->buffer_[this->buffer_index_read_].rfind("Bat Status:", 0) == 0) {
+    sscanf(this->buffer_[this->buffer_index_read_].c_str(),"Bat Status: %[^\n]",pwr_data_l.BatStatus);
+    ESP_LOGV(TAG,"%s -> %s",this->buffer_[this->buffer_index_read_].c_str(),pwr_data_l.BatStatus);
   }
   
-  if (this->buffer_[i].rfind("CMOS Status:", 0) == 0) {
-    sscanf(this->buffer_[i].c_str()," CMOS Status: %[^\n]",pwr_data_l.CMOSStatus);
-    ESP_LOGV(TAG,"%s -> %s",this->buffer_[i].c_str(),pwr_data_l.CMOSStatus);
+  if (this->buffer_[this->buffer_index_read_].rfind("CMOS Status:", 0) == 0) {
+    sscanf(this->buffer_[this->buffer_index_read_].c_str()," CMOS Status: %[^\n]",pwr_data_l.CMOSStatus);
+    ESP_LOGV(TAG,"%s -> %s",this->buffer_[this->buffer_index_read_].c_str(),pwr_data_l.CMOSStatus);
   }
 
-  if (this->buffer_[i].rfind("DMOS Status:", 0) == 0) {
-    sscanf(this->buffer_[i].c_str()," DMOS Status: %[^\n]",pwr_data_l.DMOSStatus);
-    ESP_LOGV(TAG,"%s -> %s",this->buffer_[i].c_str(),pwr_data_l.DMOSStatus);
+  if (this->buffer_[this->buffer_index_read_].rfind("DMOS Status:", 0) == 0) {
+    sscanf(this->buffer_[this->buffer_index_read_].c_str()," DMOS Status: %[^\n]",pwr_data_l.DMOSStatus);
+    ESP_LOGV(TAG,"%s -> %s",this->buffer_[this->buffer_index_read_].c_str(),pwr_data_l.DMOSStatus);
   }
   
-  if (this->buffer_[i].rfind("Bat Protect ENA :", 0) == 0) {
-    sscanf(this->buffer_[i].c_str()," Bat Protect ENA : %[^\n]",pwr_data_l.BatProtectENA);
-    ESP_LOGV(TAG,"%s -> %s",this->buffer_[i].c_str(),pwr_data_l.BatProtectENA);
+  if (this->buffer_[this->buffer_index_read_].rfind("Bat Protect ENA :", 0) == 0) {
+    sscanf(this->buffer_[this->buffer_index_read_].c_str()," Bat Protect ENA : %[^\n]",pwr_data_l.BatProtectENA);
+    ESP_LOGV(TAG,"%s -> %s",this->buffer_[this->buffer_index_read_].c_str(),pwr_data_l.BatProtectENA);
   }
     
-  if (this->buffer_[i].rfind("Pwr Protect ENA :", 0) == 0) {
-    sscanf(this->buffer_[i].c_str()," Pwr Protect ENA : %[^\n]",pwr_data_l.PwrProtectENA);
-    ESP_LOGV(TAG,"%s -> %s",this->buffer_[i].c_str(),pwr_data_l.PwrProtectENA);
+  if (this->buffer_[this->buffer_index_read_].rfind("Pwr Protect ENA :", 0) == 0) {
+    sscanf(this->buffer_[this->buffer_index_read_].c_str()," Pwr Protect ENA : %[^\n]",pwr_data_l.PwrProtectENA);
+    ESP_LOGV(TAG,"%s -> %s",this->buffer_[this->buffer_index_read_].c_str(),pwr_data_l.PwrProtectENA);
   }
     
-  if (this->buffer_[i].rfind("Bat Events:", 0) == 0) {
-    sscanf(this->buffer_[i].c_str()," Bat Events: %[^\n]",pwr_data_l.BatEvents);
-    ESP_LOGV(TAG,"%s -> %s",this->buffer_[i].c_str(),pwr_data_l.BatEvents);
+  if (this->buffer_[this->buffer_index_read_].rfind("Bat Events:", 0) == 0) {
+    sscanf(this->buffer_[this->buffer_index_read_].c_str()," Bat Events: %[^\n]",pwr_data_l.BatEvents);
+    ESP_LOGV(TAG,"%s -> %s",this->buffer_[this->buffer_index_read_].c_str(),pwr_data_l.BatEvents);
   }
 
-  if (this->buffer_[i].rfind("Power Events:", 0) == 0) {
-    sscanf(this->buffer_[i].c_str()," Power Events: %[^\n]",pwr_data_l.PowerEvents);
-    ESP_LOGV(TAG,"%s -> %s",this->buffer_[i].c_str(),pwr_data_l.PowerEvents);
+  if (this->buffer_[this->buffer_index_read_].rfind("Power Events:", 0) == 0) {
+    sscanf(this->buffer_[this->buffer_index_read_].c_str()," Power Events: %[^\n]",pwr_data_l.PowerEvents);
+    ESP_LOGV(TAG,"%s -> %s",this->buffer_[this->buffer_index_read_].c_str(),pwr_data_l.PowerEvents);
   }
 
-  if (this->buffer_[i].rfind("System Fault:", 0) == 0) {
-    sscanf(this->buffer_[i].c_str()," System Fault: %[^\n]",pwr_data_l.SystemFault);
-    ESP_LOGV(TAG,"%s -> %s",this->buffer_[i].c_str(),pwr_data_l.SystemFault);
+  if (this->buffer_[this->buffer_index_read_].rfind("System Fault:", 0) == 0) {
+    sscanf(this->buffer_[this->buffer_index_read_].c_str()," System Fault: %[^\n]",pwr_data_l.SystemFault);
+    ESP_LOGV(TAG,"%s -> %s",this->buffer_[this->buffer_index_read_].c_str(),pwr_data_l.SystemFault);
   }
 
-  if (this->buffer_[i].rfind("DevType:", 0) == 0) {
-    sscanf(this->buffer_[i].c_str()," DevType: %[^\n]",pwr_data_l.DevType);
-    ESP_LOGV(TAG,"%s -> %s",this->buffer_[i].c_str(),pwr_data_l.DevType);
+  if (this->buffer_[this->buffer_index_read_].rfind("DevType:", 0) == 0) {
+    sscanf(this->buffer_[this->buffer_index_read_].c_str()," DevType: %[^\n]",pwr_data_l.DevType);
+    ESP_LOGV(TAG,"%s -> %s",this->buffer_[this->buffer_index_read_].c_str(),pwr_data_l.DevType);
   }
 
-  //ESP_LOGD(TAG,"%s",this->buffer_[i].c_str());
+  //ESP_LOGD(TAG,"%s",this->buffer_[this->buffer_index_read_].c_str());
 
 /** already in pwr
-  if (this->buffer_[i].rfind("Coulomb:", 0) == 0) sscanf(this->buffer_[i].c_str(),"Coulomb: %d%%",&pwr_data_l.coulomb);  
-  if (this->buffer_[i].rfind("Basic Status:", 0) == 0) sscanf(this->buffer_[i].c_str()," Basic Status: %s",pwr_data_l.BasicStatus);
-  if (this->buffer_[i].rfind("Volt Status:", 0) == 0) sscanf(this->buffer_[i].c_str()," Volt Status: %s",pwr_data_l.VoltStatus);
-  if (this->buffer_[i].rfind("Current Status:", 0) == 0) sscanf(this->buffer_[i].c_str()," Current Status: %s",pwr_data_l.CurrentStatus);
-  if (this->buffer_[i].rfind("Tmpr. Status:", 0) == 0) sscanf(this->buffer_[i].c_str()," Tmpr. Status: %s",pwr_data_l.TmprStatus);
+  if (this->buffer_[this->buffer_index_read_].rfind("Coulomb:", 0) == 0) sscanf(this->buffer_[this->buffer_index_read_].c_str(),"Coulomb: %d%%",&pwr_data_l.coulomb);  
+  if (this->buffer_[this->buffer_index_read_].rfind("Basic Status:", 0) == 0) sscanf(this->buffer_[this->buffer_index_read_].c_str()," Basic Status: %s",pwr_data_l.BasicStatus);
+  if (this->buffer_[this->buffer_index_read_].rfind("Volt Status:", 0) == 0) sscanf(this->buffer_[this->buffer_index_read_].c_str()," Volt Status: %s",pwr_data_l.VoltStatus);
+  if (this->buffer_[this->buffer_index_read_].rfind("Current Status:", 0) == 0) sscanf(this->buffer_[this->buffer_index_read_].c_str()," Current Status: %s",pwr_data_l.CurrentStatus);
+  if (this->buffer_[this->buffer_index_read_].rfind("Tmpr. Status:", 0) == 0) sscanf(this->buffer_[this->buffer_index_read_].c_str()," Tmpr. Status: %s",pwr_data_l.TmprStatus);
 */
 }
 
