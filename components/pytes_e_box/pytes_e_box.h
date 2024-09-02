@@ -51,7 +51,7 @@ public:
   struct pwr_data_LineContents {
     uint32_t bat_num = 0, SOCVoltage,  coulomb, totalCoulomb, realCoulomb, totalPowerIn, totalPowerOut, 
         workStatus, batNum, nextDevice, cells = -1;    
-    char FirmVersion[TEXT_SENSOR_BIG_LEN], CoulStatus[TEXT_SENSOR_BIG_LEN], BatStatus[TEXT_SENSOR_BIG_LEN],
+    char FirmVersion[TEXT_SENSOR_MAX_LEN], CoulStatus[TEXT_SENSOR_BIG_LEN], BatStatus[TEXT_SENSOR_BIG_LEN],
         CMOSStatus[TEXT_SENSOR_BIG_LEN], DMOSStatus[TEXT_SENSOR_BIG_LEN], BatProtectENA[TEXT_SENSOR_MAX_LEN], 
         PwrProtectENA[TEXT_SENSOR_MAX_LEN], BatEvents[TEXT_SENSOR_MIN_LEN], PowerEvents[TEXT_SENSOR_MIN_LEN], 
         SystemFault[TEXT_SENSOR_MIN_LEN], Barcode[TEXT_SENSOR_BIG_LEN], DevType[TEXT_SENSOR_BIG_LEN];
