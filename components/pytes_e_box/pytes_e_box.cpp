@@ -299,7 +299,7 @@ void PytesEBoxComponent::processData_batIndexLine(std::string &buffer, int bat_n
     PytesEBoxListener::bat_index_LineContents l{};
     
     const int parsed = sscanf(                                                                      // NOLINT
-      buffer.c_str(),"%d %d %d %7s %7s %7s %7s %d%% %d",                                            // NOLINT
+      buffer.c_str(),"%d %ld %ld %7s %7s %7s %7s %ld%% %ld",                                        // NOLINT
       &l.cell_num, &l.cell_volt, &l.cell_tempr, l.cell_baseState, l.cell_voltState,                 // NOLINT
       l.cell_currState, l.cell_tempState, &l.cell_coulomb, &l.cell_curr);                           // NOLINT
     
@@ -329,7 +329,7 @@ void PytesEBoxComponent::processData_pwrLine(std::string &buffer) {
   if (isdigit(buffer[0]) && (buffer.find("Absent") == -1)) {
   PytesEBoxListener::pwr_LineContents l{};
   const int parsed = sscanf(                                                                     // NOLINT
-    buffer.c_str(),"%d %d %d %d %d %d %d %d %7s %7s %7s %7s %d%% %d-%d-%d %d:%d:%d %s %s %s %s", // NOLINT
+    buffer.c_str(),"%d %ld %d %ld %ld %ld %ld %ld %7s %7s %7s %7s %ld%% %ld-%ld-%ld %ld:%ld:%ld %s %s %s %s", // NOLINT
     &l.bat_num, &l.voltage, &l.current, &l.temperature, &l.tlow, &l.thigh, &l.vlow, &l.vhigh,    // NOLINT
     l.base_st, l.volt_st, l.curr_st, l.temp_st, &l.coulomb, &l.day, &l.month, &l.year, &l.hour,  // NOLINT
     &l.min, &l.sec, l.bv_st, l.bt_st,l.serial_st ,l.devtype_st);                                 // NOLINT
@@ -359,28 +359,28 @@ pwr_data_l.bat_num = bat_num;
 //int i = this->buffer_index_read_;
 
   if (this->buffer_[this->buffer_index_read_].rfind("SOC Voltage:", 0) == 0) {
-    sscanf(this->buffer_[this->buffer_index_read_].c_str(),"SOC Voltage: %dmV",&pwr_data_l.SOCVoltage);
-    ESP_LOGV(TAG,"%s -> %d",this->buffer_[this->buffer_index_read_].c_str(),pwr_data_l.SOCVoltage);
+    sscanf(this->buffer_[this->buffer_index_read_].c_str(),"SOC Voltage: %ldmV",&pwr_data_l.SOCVoltage);
+    ESP_LOGV(TAG,"%s -> %ld",this->buffer_[this->buffer_index_read_].c_str(),pwr_data_l.SOCVoltage);
   }
 
   if (this->buffer_[this->buffer_index_read_].rfind("Total Coulomb:", 0) == 0) {
-    sscanf(this->buffer_[this->buffer_index_read_].c_str(),"Total Coulomb: %dmAS",&pwr_data_l.totalCoulomb);
-    ESP_LOGV(TAG,"%s -> %d",this->buffer_[this->buffer_index_read_].c_str(),pwr_data_l.totalCoulomb);
+    sscanf(this->buffer_[this->buffer_index_read_].c_str(),"Total Coulomb: %ldmAS",&pwr_data_l.totalCoulomb);
+    ESP_LOGV(TAG,"%s -> %ld",this->buffer_[this->buffer_index_read_].c_str(),pwr_data_l.totalCoulomb);
   }
 
   if (this->buffer_[this->buffer_index_read_].rfind("Real Coulomb:", 0) == 0) {
-    sscanf(this->buffer_[this->buffer_index_read_].c_str(),"Real Coulomb: %dmAH",&pwr_data_l.realCoulomb);
-    ESP_LOGV(TAG,"%s -> %d",this->buffer_[this->buffer_index_read_].c_str(),pwr_data_l.realCoulomb);
+    sscanf(this->buffer_[this->buffer_index_read_].c_str(),"Real Coulomb: %ldmAH",&pwr_data_l.realCoulomb);
+    ESP_LOGV(TAG,"%s -> %ld",this->buffer_[this->buffer_index_read_].c_str(),pwr_data_l.realCoulomb);
   }
 
   if (this->buffer_[this->buffer_index_read_].rfind("Total Power In:", 0) == 0) { 
-    sscanf(this->buffer_[this->buffer_index_read_].c_str(),"Total Power In: %dAS",&pwr_data_l.totalPowerIn);
-    ESP_LOGV(TAG,"%s -> %d",this->buffer_[this->buffer_index_read_].c_str(),pwr_data_l.totalPowerIn);
+    sscanf(this->buffer_[this->buffer_index_read_].c_str(),"Total Power In: %ldAS",&pwr_data_l.totalPowerIn);
+    ESP_LOGV(TAG,"%s -> %ld",this->buffer_[this->buffer_index_read_].c_str(),pwr_data_l.totalPowerIn);
   }
   
   if (this->buffer_[this->buffer_index_read_].rfind("Work Status:", 0) == 0) {
-    sscanf(this->buffer_[this->buffer_index_read_].c_str(),"Work Status: %d",&pwr_data_l.workStatus);
-    ESP_LOGV(TAG,"%s -> %d",this->buffer_[this->buffer_index_read_].c_str(),pwr_data_l.workStatus);
+    sscanf(this->buffer_[this->buffer_index_read_].c_str(),"Work Status: %ld",&pwr_data_l.workStatus);
+    ESP_LOGV(TAG,"%s -> %ld",this->buffer_[this->buffer_index_read_].c_str(),pwr_data_l.workStatus);
   }
 
   if (this->buffer_[this->buffer_index_read_].rfind("Bat Num:", 0) == 0) {
@@ -389,8 +389,8 @@ pwr_data_l.bat_num = bat_num;
   }
 
   if (this->buffer_[this->buffer_index_read_].rfind("Total Power Out :", 0) == 0) {
-    sscanf(this->buffer_[this->buffer_index_read_].c_str(),"Total Power Out : %dAS ",&pwr_data_l.totalPowerOut);
-    ESP_LOGV(TAG,"%s -> %d",this->buffer_[this->buffer_index_read_].c_str(),pwr_data_l.totalPowerOut);
+    sscanf(this->buffer_[this->buffer_index_read_].c_str(),"Total Power Out : %ldAS ",&pwr_data_l.totalPowerOut);
+    ESP_LOGV(TAG,"%s -> %ld",this->buffer_[this->buffer_index_read_].c_str(),pwr_data_l.totalPowerOut);
   }
 
   if (this->buffer_[this->buffer_index_read_].rfind("Barcode:", 0) == 0) {
