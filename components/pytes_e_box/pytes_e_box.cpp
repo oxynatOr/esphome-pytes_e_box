@@ -299,7 +299,7 @@ void PytesEBoxComponent::processData_batIndexLine(std::string &buffer, int bat_n
     PytesEBoxListener::bat_index_LineContents l{};
     
     const int parsed = sscanf(                                                                                  // NOLINT
-      buffer.c_str(),"%hhd %ld %ld %7s %7s %7s %7s %ld%% %hhd",                                                 // NOLINT
+      buffer.c_str(),"%hhd %ld %ld %7s %7s %7s %7s %ld%% %d",                                                 // NOLINT
       &l.cell_num, &l.cell_volt, &l.cell_tempr, l.cell_baseState, l.cell_voltState,                             // NOLINT
       l.cell_currState, l.cell_tempState, &l.cell_coulomb, &l.cell_curr);                                       // NOLINT
     
@@ -384,8 +384,8 @@ pwr_data_l.bat_num = bat_num;
   }
 
   if (this->buffer_[this->buffer_index_read_].rfind("Bat Num:", 0) == 0) {
-    sscanf(this->buffer_[this->buffer_index_read_].c_str()," Bat Num: %d",&pwr_data_l.cells);
-    ESP_LOGV(TAG,"%s -> %d",this->buffer_[this->buffer_index_read_].c_str(),pwr_data_l.cells);
+    sscanf(this->buffer_[this->buffer_index_read_].c_str()," Bat Num: %hhd",&pwr_data_l.cells);
+    ESP_LOGV(TAG,"%s -> %hhd",this->buffer_[this->buffer_index_read_].c_str(),pwr_data_l.cells);
   }
 
   if (this->buffer_[this->buffer_index_read_].rfind("Total Power Out :", 0) == 0) {
