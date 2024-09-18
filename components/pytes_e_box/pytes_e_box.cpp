@@ -26,7 +26,7 @@ void PytesEBoxComponent::dump_config() {
   this->check_uart_settings(115200, 1, esphome::uart::UART_CONFIG_PARITY_NONE, 8);
   ESP_LOGCONFIG(TAG, "PytesEBox:");
   ESP_LOGCONFIG(TAG, "  Batteries: %d", this->battaries_in_system_);
-  ESP_LOGCONFIG(TAG, "  Poll Timeout: %d", this->polling_timeout_);
+  ESP_LOGCONFIG(TAG, "  Poll Timeout: %ld", this->polling_timeout_);
   //ESP_LOGCONFIG(TAG, "  Command Idle Time: %d", this->polling_timeout_);
   ESP_LOGCONFIG(TAG, "  Commands in Queue: %d", this->cmd_queue_.size());
   LOG_UPDATE_INTERVAL(this);
@@ -76,7 +76,7 @@ uint8_t PytesEBoxComponent::send_command_again() {
     this->write_str(this->cmd_queue_[this->command_queue_position_].command.c_str());
     this->write_str("\n");  
     this->state_ = STATE_POLL;
-    ESP_LOGI(TAG, "Retry command from queue: %s from index: %d (%d)", this->cmd_queue_[this->command_queue_position_].command.c_str(), this->command_queue_position_,this->command_retries_);
+    ESP_LOGI(TAG, "Retry command from queue: %s from index: %d (%ld)", this->cmd_queue_[this->command_queue_position_].command.c_str(), this->command_queue_position_,this->command_retries_);
     this->command_retries_++;
     return 1;
   } 
@@ -126,7 +126,7 @@ void PytesEBoxComponent::loop() {
   if (millis() - this->last_poll_ > this->polling_timeout_) {
       this->last_poll_ = millis();
       const char *command = this->cmd_queue_[this->command_queue_position_].command.c_str();
-      ESP_LOGE(TAG, "timeout command from queue: %s with %d retries", command, this->command_retries_);
+      ESP_LOGE(TAG, "timeout command from queue: %s with %ld retries", command, this->command_retries_);
       this->clear_uart_buffer();
       //this->command_queue_position_ = (this->command_queue_position_+1) % COMMAND_QUEUE_LENGTH;
       this->state_ = STATE_SEND_NEXT_COMMAND;
@@ -298,10 +298,10 @@ void PytesEBoxComponent::processData_batIndexLine(std::string &buffer, int bat_n
   if (isdigit(buffer[0])) {
     PytesEBoxListener::bat_index_LineContents l{};
     
-    const int parsed = sscanf(                                                                      // NOLINT
-      buffer.c_str(),"%d %ld %ld %7s %7s %7s %7s %ld%% %ld",                                        // NOLINT
-      &l.cell_num, &l.cell_volt, &l.cell_tempr, l.cell_baseState, l.cell_voltState,                 // NOLINT
-      l.cell_currState, l.cell_tempState, &l.cell_coulomb, &l.cell_curr);                           // NOLINT
+    const int parsed = sscanf(                                                                                  // NOLINT
+      buffer.c_str(),"%hhd %ld %ld %7s %7s %7s %7s %ld%% %hhd",                                                 // NOLINT
+      &l.cell_num, &l.cell_volt, &l.cell_tempr, l.cell_baseState, l.cell_voltState,                             // NOLINT
+      l.cell_currState, l.cell_tempState, &l.cell_coulomb, &l.cell_curr);                                       // NOLINT
     
     
     if (parsed != 9) {
@@ -328,14 +328,14 @@ void PytesEBoxComponent::processData_batIndexLine(std::string &buffer, int bat_n
 void PytesEBoxComponent::processData_pwrLine(std::string &buffer) {
   if (isdigit(buffer[0]) && (buffer.find("Absent") == -1)) {
   PytesEBoxListener::pwr_LineContents l{};
-  const int parsed = sscanf(                                                                     // NOLINT
-    buffer.c_str(),"%d %ld %d %ld %ld %ld %ld %ld %7s %7s %7s %7s %ld%% %ld-%ld-%ld %ld:%ld:%ld %s %s %s %s", // NOLINT
-    &l.bat_num, &l.voltage, &l.current, &l.temperature, &l.tlow, &l.thigh, &l.vlow, &l.vhigh,    // NOLINT
-    l.base_st, l.volt_st, l.curr_st, l.temp_st, &l.coulomb, &l.day, &l.month, &l.year, &l.hour,  // NOLINT
-    &l.min, &l.sec, l.bv_st, l.bt_st,l.serial_st ,l.devtype_st);                                 // NOLINT
+  const int parsed = sscanf(                                                                                      // NOLINT
+    buffer.c_str(),"%hhd %ld %d %d %ld %ld %ld %ld %7s %7s %7s %7s %ld%% %ld-%ld-%ld %ld:%ld:%ld %s %s %s %s",   // NOLINT
+    &l.bat_num, &l.voltage, &l.current, &l.temperature, &l.tlow, &l.thigh, &l.vlow, &l.vhigh,                     // NOLINT
+    l.base_st, l.volt_st, l.curr_st, l.temp_st, &l.coulomb, &l.day, &l.month, &l.year, &l.hour,                   // NOLINT
+    &l.min, &l.sec, l.bv_st, l.bt_st,l.serial_st ,l.devtype_st);                                                  // NOLINT
 
     if (parsed != 23) {
-      ESP_LOGE(TAG, "invalid line: found only %d, should be 23 items. in line %d\n: %s",
+      ESP_LOGE(TAG, "invalid line: found only %d, should be 23 items. in line %hhd\n: %s",
                     parsed, l.bat_num, buffer.substr(0, buffer.size() - 2).c_str());
       return;
     }
