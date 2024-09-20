@@ -26,7 +26,7 @@ void PytesEBoxComponent::dump_config() {
   this->check_uart_settings(115200, 1, esphome::uart::UART_CONFIG_PARITY_NONE, 8);
   ESP_LOGCONFIG(TAG, "PytesEBox:");
   ESP_LOGCONFIG(TAG, "  Batteries: %d", this->battaries_in_system_);
-  ESP_LOGCONFIG(TAG, "  Poll Timeout: %ld", this->polling_timeout_);
+  ESP_LOGCONFIG(TAG, "  Poll Timeout: %d", this->polling_timeout_);
   //ESP_LOGCONFIG(TAG, "  Command Idle Time: %d", this->polling_timeout_);
   ESP_LOGCONFIG(TAG, "  Commands in Queue: %d", this->cmd_queue_.size());
   LOG_UPDATE_INTERVAL(this);

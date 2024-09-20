@@ -7,7 +7,7 @@ namespace pytes_e_box {
 
 //static const char *const TAG_BS = "PytesEBoxbattery.sensor";
 
-PytesEBoxBatterySensor::PytesEBoxBatterySensor(int8_t bat_num) { this->bat_num_ = bat_num; }
+PytesEBoxBatterySensor::PytesEBoxBatterySensor(int bat_num) { this->bat_num_ = bat_num; }
 
 
 void PytesEBoxBatterySensor::dump_config() {

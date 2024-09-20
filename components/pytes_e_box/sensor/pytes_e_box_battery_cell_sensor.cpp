@@ -8,7 +8,7 @@ namespace pytes_e_box {
 //static const char *const TAG_BS = "PytesEBoxbattery.sensor";
 
 
-PytesEBoxBatteryCellSensor::PytesEBoxBatteryCellSensor(int8_t bat_num, int8_t cell_num) { this->bat_num_ = bat_num; this->cell_num_ = cell_num; }
+PytesEBoxBatteryCellSensor::PytesEBoxBatteryCellSensor(int bat_num, int cell_num) { this->bat_num_ = bat_num; this->cell_num_ = cell_num; }
 void PytesEBoxBatteryCellSensor::dump_config() {
   ESP_LOGCONFIG(TAG, "PytesEBox Battery Cell Sensor:");
   ESP_LOGCONFIG(TAG, " Battery %d", this->bat_num_);

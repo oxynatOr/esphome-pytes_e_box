@@ -36,16 +36,14 @@ class PytesEBoxListener {
 public:
   struct pwr_LineContents {
     uint32_t tlow, thigh, vlow, vhigh, day, month, year, hour, min, sec, coulomb, voltage;
-    int current, temperature;
-    int8_t bat_num = 0;
+    int current, temperature, bat_num = 0;
     char base_st[TEXT_SENSOR_MIN_LEN], volt_st[TEXT_SENSOR_MIN_LEN], curr_st[TEXT_SENSOR_MIN_LEN],
         temp_st[TEXT_SENSOR_MIN_LEN], serial_st[TEXT_SENSOR_MAX_LEN], devtype_st[TEXT_SENSOR_MAX_LEN],
         bv_st[TEXT_SENSOR_MIN_LEN], bt_st[TEXT_SENSOR_MIN_LEN];
   };
   struct bat_index_LineContents {
     uint32_t cell_volt,cell_tempr, cell_coulomb;
-    int8_t bat_num = 0, cell_num = 0;
-    int cell_curr;
+    int cell_curr, bat_num = 0, cell_num = 0;
     char cell_baseState[TEXT_SENSOR_MAX_LEN], cell_voltState[TEXT_SENSOR_MAX_LEN], cell_currState[TEXT_SENSOR_MAX_LEN], 
           cell_tempState[TEXT_SENSOR_MAX_LEN];
   };
@@ -53,7 +51,7 @@ public:
   struct pwr_data_LineContents {
     uint32_t SOCVoltage,  coulomb, totalCoulomb, realCoulomb, totalPowerIn, totalPowerOut, 
         workStatus, batNum, nextDevice;    
-    int8_t bat_num = 0, cells = -1;        
+    int bat_num = 0, cells = -1;        
     char FirmVersion[TEXT_SENSOR_MAX_LEN], CoulStatus[TEXT_SENSOR_BIG_LEN], BatStatus[TEXT_SENSOR_BIG_LEN],
         CMOSStatus[TEXT_SENSOR_BIG_LEN], DMOSStatus[TEXT_SENSOR_BIG_LEN], BatProtectENA[TEXT_SENSOR_MAX_LEN], 
         PwrProtectENA[TEXT_SENSOR_MAX_LEN], BatEvents[TEXT_SENSOR_MIN_LEN], PowerEvents[TEXT_SENSOR_MIN_LEN], 
@@ -167,7 +165,7 @@ public:
   void clear_uart_buffer(); 
 protected:
   static const size_t COMMAND_QUEUE_LENGTH = 34; //16Boxes with 16 Batterys and one index. 
-  int8_t battaries_in_system_;
+  int battaries_in_system_;
   uint32_t polling_timeout_;
   uint32_t command_idle_time_;
   uint32_t found_battaries_in_system_;
