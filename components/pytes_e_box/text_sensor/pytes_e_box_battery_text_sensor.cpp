@@ -38,51 +38,51 @@ void PytesEBoxBatteryTextSensor::on_pwrn_line_read(pwr_data_LineContents *line) 
     return;
   }
   if (this->barcode_text_sensor_ != nullptr) {
-    this->barcode_text_sensor_->publish_state(std::string(line->Barcode));
+    this->barcode_text_sensor_->publish_state(line->Barcode);
   }
 
   if (this->dev_type_text_sensor_ != nullptr) {
-    this->dev_type_text_sensor_->publish_state(std::string(line->DevType));
+    this->dev_type_text_sensor_->publish_state(line->DevType);
   }
 
   if (this->firm_version_text_sensor_ != nullptr) {
-    this->firm_version_text_sensor_->publish_state(std::string(line->FirmVersion));
+    this->firm_version_text_sensor_->publish_state(line->FirmVersion);
   }
 
   if (this->coulomb_status_text_sensor_ != nullptr) {
-    this->coulomb_status_text_sensor_->publish_state(std::string(line->CoulStatus));
+    this->coulomb_status_text_sensor_->publish_state(line->CoulStatus);
   }
 
   if (this->bat_status_text_sensor_ != nullptr) {
-    this->bat_status_text_sensor_->publish_state(std::string(line->BatStatus));
+    this->bat_status_text_sensor_->publish_state(line->BatStatus);
   }
 
   if (this->cmos_status_text_sensor_ != nullptr) {
-    this->cmos_status_text_sensor_->publish_state(std::string(line->CMOSStatus));
+    this->cmos_status_text_sensor_->publish_state(line->CMOSStatus);
   }
 
   if (this->dmos_status_text_sensor_ != nullptr) {
-    this->dmos_status_text_sensor_->publish_state(std::string(line->DMOSStatus));
+    this->dmos_status_text_sensor_->publish_state(line->DMOSStatus);
   }
 
   if (this->bat_protect_ena_text_sensor_ != nullptr) {
-    this->bat_protect_ena_text_sensor_->publish_state(std::string(line->BatProtectENA));
+    this->bat_protect_ena_text_sensor_->publish_state(line->BatProtectENA);
   }
 
   if (this->pwr_protect_ena_text_sensor_ != nullptr) {
-    this->pwr_protect_ena_text_sensor_->publish_state(std::string(line->PwrProtectENA));
+    this->pwr_protect_ena_text_sensor_->publish_state(line->PwrProtectENA);
   }
 
   if (this->bat_events_text_sensor_ != nullptr) {
-    this->bat_events_text_sensor_->publish_state(std::string(line->BatEvents));
+    this->bat_events_text_sensor_->publish_state(line->BatEvents);
   }
 
   if (this->power_events_text_sensor_ != nullptr) {
-    this->power_events_text_sensor_->publish_state(std::string(line->PowerEvents));
+    this->power_events_text_sensor_->publish_state(line->PowerEvents);
   }
 
   if (this->system_fault_text_sensor_ != nullptr) {
-    this->system_fault_text_sensor_->publish_state(std::string(line->SystemFault));
+    this->system_fault_text_sensor_->publish_state(line->SystemFault);
   }
 
 }
@@ -96,16 +96,16 @@ void PytesEBoxBatteryTextSensor::on_pwr_line_read(pwr_LineContents *line) {
     return;
   }
   if (this->base_state_text_sensor_ != nullptr) {
-    this->base_state_text_sensor_->publish_state(std::string(line->base_st));
+    this->base_state_text_sensor_->publish_state(line->base_st);
   }
   if (this->voltage_state_text_sensor_ != nullptr) {
-    this->voltage_state_text_sensor_->publish_state(std::string(line->volt_st));
+    this->voltage_state_text_sensor_->publish_state(line->volt_st);
   }
   if (this->current_state_text_sensor_ != nullptr) {
-    this->current_state_text_sensor_->publish_state(std::string(line->curr_st));
+    this->current_state_text_sensor_->publish_state(line->curr_st);
   }
   if (this->temperature_state_text_sensor_ != nullptr) {
-    this->temperature_state_text_sensor_->publish_state(std::string(line->temp_st));
+    this->temperature_state_text_sensor_->publish_state(line->temp_st);
   }
 }
 

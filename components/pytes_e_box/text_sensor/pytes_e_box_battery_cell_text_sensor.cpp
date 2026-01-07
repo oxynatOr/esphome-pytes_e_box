@@ -35,19 +35,19 @@ void PytesEBoxBatteryCellTextSensor::on_batn_line_read(bat_index_LineContents *l
 
    
   if (this->base_state_text_sensor_ != nullptr) {
-  base_state_text_sensor_->publish_state(std::string(line->cell_baseState));
+  base_state_text_sensor_->publish_state(line->cell_baseState);
   }
 
   if (this->voltage_state_text_sensor_ != nullptr) {
-  voltage_state_text_sensor_->publish_state(std::string(line->cell_voltState));
+  voltage_state_text_sensor_->publish_state(line->cell_voltState);
   }
   
   if (this->current_state_text_sensor_ != nullptr) {
-  current_state_text_sensor_->publish_state(std::string(line->cell_currState));
+  current_state_text_sensor_->publish_state(line->cell_currState);
   }
 
   if (this->temperature_state_text_sensor_ != nullptr) {
-  temperature_state_text_sensor_->publish_state(std::string(line->cell_tempState));
+  temperature_state_text_sensor_->publish_state(line->cell_tempState);
   }
 
 }
