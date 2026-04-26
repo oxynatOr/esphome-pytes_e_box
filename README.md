@@ -57,12 +57,24 @@ If you have multiple batteries you need to connect to the master battery's conso
 | 3v3 | VCC | ***NC*** | Power |
 
 
+On ESP32-S (Xtensa) linker fails when 13+ batteries are configured.
+The Xtensa assembler then emits per-function literal pools inline in .text, keeping every load in range.
+
+```yaml
+  platformio_options:
+    build_flags: 
+    - -mtext-section-literals
+```
+
+
+
 Tested devcies:
 ------------------------
 | Manufacturer | Devcie |
 | --- | --- |
 | Pytes | E-BOX-48100R-C |
 | Pytes | E-BOX-48100V-D (V5) |
+| Pytes | E-BOX-48100R TE |
 
 Component/Hub
 -------------
