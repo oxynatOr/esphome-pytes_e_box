@@ -2,6 +2,7 @@ import logging
 import esphome.codegen as cg
 from esphome.components import uart
 import esphome.config_validation as cv
+from esphome.core import CORE
 from esphome.const import (
     CONF_ID,
     CONF_NAME,
@@ -119,5 +120,22 @@ async def to_code(config):
     cg.add(var.set_system_battery_count(config[CONF_BATTERIES_COMPONENT]))
     cg.add(var.set_polling_timeout(config[CONF_POLL_TIMEOUT]))
     cg.add(var.set_cmd_idle_time(config[CONF_CMD_IDLE_TIME]))
+
+    # Xtensa l32r has ~256 KB reach; with many batteries the consolidated
+    # .literal section drifts past it. Inlining literals into .text gives
+    # each function its own reachable literal pool. Skipped on RISC-V
+    # variants (ESP32-C3/C6/H2 etc.) where the flag is unknown to GCC.
+    if CORE.is_esp8266:
+        cg.add_build_flag("-mtext-section-literals")
+    elif CORE.is_esp32:
+        from esphome.components.esp32 import get_esp32_variant
+        from esphome.components.esp32.const import (
+            VARIANT_ESP32,
+            VARIANT_ESP32S2,
+            VARIANT_ESP32S3,
+        )
+        if get_esp32_variant() in (VARIANT_ESP32, VARIANT_ESP32S2, VARIANT_ESP32S3):
+            cg.add_build_flag("-mtext-section-literals")
+
     await cg.register_component(var, config)
     await uart.register_uart_device(var, config)
