@@ -6,7 +6,7 @@
 namespace esphome {
 namespace pytes_e_box {
 
-class PytesEBoxBatteryCellTextSensor : public PytesEBoxListener, public Component {
+class PytesEBoxBatteryCellTextSensor : public BmsListener, public Component {
  public:
   PytesEBoxBatteryCellTextSensor(int bat_num,int cell_num); 
 
@@ -17,9 +17,7 @@ class PytesEBoxBatteryCellTextSensor : public PytesEBoxListener, public Componen
   SUB_TEXT_SENSOR(current_state)
   SUB_TEXT_SENSOR(temperature_state)
 
-  virtual void on_pwr_line_read(pwr_LineContents *line);
-  virtual void on_pwrn_line_read(pwr_data_LineContents *line);
-  virtual void on_batn_line_read(bat_index_LineContents *line);
+  void on_cell_data(const BmsCellData *data) override;
 
  protected:
   int  bat_num_;

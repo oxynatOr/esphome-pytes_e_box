@@ -5,6 +5,7 @@ import esphome.config_validation as cv
 from esphome.const import (
     CONF_ID,
     CONF_NAME,
+    CONF_TYPE,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -78,6 +79,14 @@ UNIT_MILLI_AMPERE = "mA"
 
 pytes_e_box_ns = cg.esphome_ns.namespace("pytes_e_box")
 PytesEBoxComponent = pytes_e_box_ns.class_("PytesEBoxComponent", cg.PollingComponent, uart.UARTDevice)
+
+# Selectable BMS protocol driver. Add new entries here (and a matching C++ driver)
+# to support additional battery types.
+BmsType = pytes_e_box_ns.enum("BmsType", is_class=True)
+BMS_TYPES = {
+    "pytes_e_box": BmsType.PYTES_E_BOX,
+    "example": BmsType.EXAMPLE,
+}
 CONF_BATTERIES_COMPONENT = "batteries"
 CONF_POLL_TIMEOUT = "poll_timeout"
 CONF_CMD_IDLE_TIME = "command_idle_time" 
@@ -105,6 +114,7 @@ CONFIG_SCHEMA = cv.All(
     cv.Schema(
         {
             cv.GenerateID(): cv.declare_id(PytesEBoxComponent),
+            cv.Optional(CONF_TYPE, default="pytes_e_box"): cv.enum(BMS_TYPES, lower=True),
             cv.Required(CONF_BATTERIES_COMPONENT): CV_NUM_BATTERIES,
             cv.Required(CONF_POLL_TIMEOUT): cv.positive_time_period_milliseconds,
             cv.Optional(CONF_CMD_IDLE_TIME): cv.positive_time_period_milliseconds,
@@ -116,6 +126,7 @@ CONFIG_SCHEMA = cv.All(
 
 async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
+    cg.add(var.set_driver_type(config[CONF_TYPE]))
     cg.add(var.set_system_battery_count(config[CONF_BATTERIES_COMPONENT]))
     cg.add(var.set_polling_timeout(config[CONF_POLL_TIMEOUT]))
     cg.add(var.set_cmd_idle_time(config[CONF_CMD_IDLE_TIME]))

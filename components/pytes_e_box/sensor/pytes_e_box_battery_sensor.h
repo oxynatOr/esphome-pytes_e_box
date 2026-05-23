@@ -6,7 +6,7 @@
 namespace esphome {
 namespace pytes_e_box {
 
-class PytesEBoxBatterySensor : public PytesEBoxListener, public Component {
+class PytesEBoxBatterySensor : public BmsListener, public Component {
  public:
   PytesEBoxBatterySensor(int bat_num);
   void dump_config() override;
@@ -28,11 +28,7 @@ class PytesEBoxBatterySensor : public PytesEBoxListener, public Component {
 
   SUB_SENSOR(dev_datetime)
 
-
-
-  virtual void on_pwr_line_read(pwr_LineContents *line);
-  virtual void on_pwrn_line_read(pwr_data_LineContents *line);
-  virtual void on_batn_line_read(bat_index_LineContents *line);
+  void on_battery_data(const BmsBatteryData *data) override;
 
  protected:
   int bat_num_;  
