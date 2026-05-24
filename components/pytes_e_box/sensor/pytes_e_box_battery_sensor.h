@@ -15,6 +15,7 @@ class PytesEBoxBatterySensor : public BmsListener, public Component {
   SUB_SENSOR(temperature)
   SUB_SENSOR(temperature_low)
   SUB_SENSOR(temperature_high)
+  SUB_SENSOR(mos_temperature)
   SUB_SENSOR(voltage_low)
   SUB_SENSOR(voltage_high)
   SUB_SENSOR(coulomb)

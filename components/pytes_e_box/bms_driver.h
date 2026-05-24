@@ -25,7 +25,7 @@ struct PollingCommand {
 
 // Selectable BMS protocol. Extend this enum (and the Python mapping) to add a
 // new driver.
-enum class BmsType { PYTES_E_BOX, EXAMPLE };
+enum class BmsType { PYTES_E_BOX, EXAMPLE, PYLONTECH, PYTES_LV1 };
 
 // What the host should publish after a parse step.
 enum class BmsEmit { NONE, BATTERY, CELL };
@@ -40,6 +40,13 @@ class BmsDriver {
 
   // Build the polling command queue for the given number of batteries.
   virtual void build_commands(std::vector<PollingCommand> &queue, int battery_count) = 0;
+
+  // Streaming drivers send their (single) command once per update and then parse
+  // every incoming line continuously, without command-echo recognition or a
+  // response terminator. The host runs a separate, simpler read path for them
+  // (see PytesEBoxComponent::loop_streaming_). Non-streaming drivers use the
+  // request/echo/terminate state machine.
+  virtual bool is_streaming() const { return false; }
 
   // Identify which command an echoed prompt/header line belongs to. Return
   // CMD_NIL/CMD_ERROR when the line is not a recognizable command echo.

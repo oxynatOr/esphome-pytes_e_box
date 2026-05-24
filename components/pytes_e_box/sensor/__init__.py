@@ -29,6 +29,7 @@ from .. import (pytes_e_box_ns ,CONF_PYTES_E_BOX_ID, PYTES_E_BOX_COMPONENT_SCHEM
 CONF_COULOMB            = "coulomb"
 CONF_TEMPERATURE_LOW    = "temperature_low"
 CONF_TEMPERATURE_HIGH   = "temperature_high"
+CONF_MOS_TEMPERATURE    = "mos_temperature"
 CONF_VOLTAGE_LOW        = "voltage_low"
 CONF_VOLTAGE_HIGH       = "voltage_high"
 
@@ -75,6 +76,12 @@ BAT_TYPES: dict[str, cv.Schema] = {
     ),
     CONF_TEMPERATURE_HIGH: sensor.sensor_schema(
         #PytesEBoxBatterySensor,
+        unit_of_measurement=UNIT_CELSIUS,
+        accuracy_decimals=1,
+        device_class=DEVICE_CLASS_TEMPERATURE,
+    ),
+    CONF_MOS_TEMPERATURE: sensor.sensor_schema(
+        # Pylontech MOS temperature
         unit_of_measurement=UNIT_CELSIUS,
         accuracy_decimals=1,
         device_class=DEVICE_CLASS_TEMPERATURE,

@@ -2,6 +2,8 @@
 #include "esphome/core/log.h"
 #include "esphome/core/helpers.h"
 
+#include <algorithm>
+
 namespace esphome {
 namespace pytes_e_box {
 
@@ -32,6 +34,12 @@ void PytesEBoxComponent::setup() {
   switch (this->driver_type_) {
     case BmsType::EXAMPLE:
       this->driver_ = std::unique_ptr<BmsDriver>(new ExampleDriver());
+      break;
+    case BmsType::PYLONTECH:
+      this->driver_ = std::unique_ptr<BmsDriver>(new PylontechDriver());
+      break;
+    case BmsType::PYTES_LV1:
+      this->driver_ = std::unique_ptr<BmsDriver>(new PytesLv1Driver());
       break;
     case BmsType::PYTES_E_BOX:
     default:
@@ -99,6 +107,23 @@ void PytesEBoxComponent::emit_(BmsEmit emit) {
 }
 
 void PytesEBoxComponent::update() {
+  // Streaming drivers (e.g. Pylontech): fire the command once and let
+  // loop_streaming_() parse whatever arrives, line by line.
+  if (this->driver_ != nullptr && this->driver_->is_streaming()) {
+    this->buffer_index_read_ = 0;
+    this->buffer_index_write_ = 0;
+    for (auto &b : this->buffer_) {
+      b.clear();
+    }
+    this->clear_uart_buffer();
+    this->driver_->reset();
+    if (!this->cmd_queue_.empty()) {
+      this->write_str(this->cmd_queue_[0].command.c_str());
+      this->write_str("\n");
+    }
+    return;
+  }
+
   if (this->state_ == STATE_IDLE) {
     this->command_queue_position_ = 0;
     if (this->send_next_command_() == 0) {
@@ -108,8 +133,44 @@ void PytesEBoxComponent::update() {
   }
 }
 
+void PytesEBoxComponent::loop_streaming_() {
+  // Port of the upstream Pylontech read loop: collect bytes into the line ring
+  // buffer (split on LF), and when the UART is drained, parse exactly one queued
+  // line per loop() so we never block the component.
+  size_t avail = this->available();
+  if (avail > 0) {
+    uint8_t buf[64];
+    while (avail > 0) {
+      size_t n = std::min(avail, sizeof(buf));
+      if (!this->read_array(buf, n)) {
+        break;
+      }
+      avail -= n;
+      for (size_t i = 0; i < n; i++) {
+        char c = (char) buf[i];
+        this->buffer_[this->buffer_index_write_] += c;
+        if (c == '\n' || this->buffer_[this->buffer_index_write_].length() >= (size_t) MAX_DATA_LINE_LENGTH) {
+          this->buffer_index_write_ = (this->buffer_index_write_ + 1) % NUM_BUFFERS;
+          this->buffer_[this->buffer_index_write_].clear();
+        }
+      }
+    }
+  } else if (this->buffer_index_read_ != this->buffer_index_write_) {
+    BmsCommandId cmd = this->cmd_queue_.empty() ? CMD_NIL : this->cmd_queue_[0].identifier;
+    BmsEmit emit = this->driver_->parse_line(cmd, this->buffer_[this->buffer_index_read_], 0);
+    this->emit_(emit);
+    this->buffer_[this->buffer_index_read_].clear();
+    this->buffer_index_read_ = (this->buffer_index_read_ + 1) % NUM_BUFFERS;
+  }
+}
+
 /* only 1-line per run, otherwise we will block the component. */
 void PytesEBoxComponent::loop() {
+  if (this->driver_ != nullptr && this->driver_->is_streaming()) {
+    this->loop_streaming_();
+    return;
+  }
+
   /** nothing to do, keep chilling */
   if (this->state_ == STATE_IDLE || this->state_ == STATE_WAIT) {
     return;

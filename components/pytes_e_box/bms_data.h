@@ -19,6 +19,7 @@ struct BmsBatteryData {
   float temperature = NAN;
   float temperature_low = NAN;
   float temperature_high = NAN;
+  float mos_temperature = NAN;
   float voltage_low = NAN;
   float voltage_high = NAN;
   float coulomb = NAN;

@@ -33,8 +33,9 @@ class PytesDriver : public BmsDriver {
 
   // pwr: one complete battery summary per line.
   bool parse_pwr_line_(const std::string &line);
-  // bat N: one cell per line.
-  bool parse_bat_index_(const std::string &line, int index);
+  // bat N: one cell per line. virtual so variants (e.g. LV1) can override just
+  // the cell-line column layout while reusing the rest of the protocol.
+  virtual bool parse_bat_index_(const std::string &line, int index);
   // pwr N: key:value spread across many lines, accumulated into bat_.
   void parse_pwr_index_(const std::string &line, int index);
 

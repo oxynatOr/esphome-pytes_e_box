@@ -86,6 +86,8 @@ BmsType = pytes_e_box_ns.enum("BmsType", is_class=True)
 BMS_TYPES = {
     "pytes_e_box": BmsType.PYTES_E_BOX,
     "example": BmsType.EXAMPLE,
+    "pylontech": BmsType.PYLONTECH,
+    "pytes_lv1": BmsType.PYTES_LV1,
 }
 CONF_BATTERIES_COMPONENT = "batteries"
 CONF_POLL_TIMEOUT = "poll_timeout"

@@ -1,0 +1,76 @@
+# Example for the Pylontech console protocol (US2000/US3000 and compatibles).
+# A single `pwr` returns one line per battery; pick each one with `battery:`.
+
+esphome:
+  name: pylontech-monitor
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+logger:
+
+external_components:
+  - source:
+      type: local
+      path: ../components
+
+uart:
+  id: uart01
+  tx_pin: GPIO17
+  rx_pin: GPIO16
+  baud_rate: 115200
+  rx_buffer_size: 1024
+
+pytes_e_box:
+  - id: bms01
+    type: pylontech
+    uart_id: uart01
+    batteries: 2
+    update_interval: 30s
+    poll_timeout: 4s
+    command_idle_time: 150ms
+
+sensor:
+  - platform: pytes_e_box
+    pytes_e_box_id: bms01
+    battery: 1
+    voltage:
+      name: "Battery 1 Voltage"
+    current:
+      name: "Battery 1 Current"
+    temperature:
+      name: "Battery 1 Temperature"
+    mos_temperature:
+      name: "Battery 1 MOS Temperature"
+    coulomb:
+      name: "Battery 1 State of Charge"
+    temperature_low:
+      name: "Battery 1 Temperature Low"
+    temperature_high:
+      name: "Battery 1 Temperature High"
+    voltage_low:
+      name: "Battery 1 Cell Voltage Low"
+    voltage_high:
+      name: "Battery 1 Cell Voltage High"
+
+  - platform: pytes_e_box
+    pytes_e_box_id: bms01
+    battery: 2
+    voltage:
+      name: "Battery 2 Voltage"
+    coulomb:
+      name: "Battery 2 State of Charge"
+
+text_sensor:
+  - platform: pytes_e_box
+    pytes_e_box_id: bms01
+    battery: 1
+    base_state:
+      name: "Battery 1 Base State"
+    voltage_state:
+      name: "Battery 1 Voltage State"
+    current_state:
+      name: "Battery 1 Current State"
+    temperature_state:
+      name: "Battery 1 Temperature State"

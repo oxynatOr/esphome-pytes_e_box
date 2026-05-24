@@ -18,6 +18,7 @@ void PytesEBoxBatterySensor::dump_config() {
   LOG_SENSOR("  ", "Temperature", this->temperature_sensor_);
   LOG_SENSOR("  ", "Temperature low", this->temperature_low_sensor_);
   LOG_SENSOR("  ", "Temperature high", this->temperature_high_sensor_);
+  LOG_SENSOR("  ", "MOS Temperature", this->mos_temperature_sensor_);
   LOG_SENSOR("  ", "Voltage low", this->voltage_low_sensor_);
   LOG_SENSOR("  ", "Voltage high", this->voltage_high_sensor_);
   LOG_SENSOR("  ", "Coulomb", this->coulomb_sensor_);
@@ -50,6 +51,9 @@ void PytesEBoxBatterySensor::on_battery_data(const BmsBatteryData *line) {
   }
   if (this->temperature_high_sensor_ != nullptr && !std::isnan(line->temperature_high)) {
     this->temperature_high_sensor_->publish_state(line->temperature_high / 1000.0f);
+  }
+  if (this->mos_temperature_sensor_ != nullptr && !std::isnan(line->mos_temperature)) {
+    this->mos_temperature_sensor_->publish_state(line->mos_temperature / 1000.0f);
   }
   if (this->voltage_low_sensor_ != nullptr && !std::isnan(line->voltage_low)) {
     this->voltage_low_sensor_->publish_state(line->voltage_low / 1000.0f);

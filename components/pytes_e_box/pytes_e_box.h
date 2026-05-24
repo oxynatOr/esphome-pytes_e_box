@@ -11,7 +11,9 @@
 #include "bms_data.h"
 #include "bms_driver.h"
 #include "pytes_driver.h"
+#include "pytes_lv1_driver.h"
 #include "example_driver.h"
+#include "pylontech_driver.h"
 
 namespace esphome {
 namespace pytes_e_box {
@@ -102,6 +104,8 @@ class PytesEBoxComponent : public PollingComponent, public uart::UARTDevice {
   uint8_t command_queue_max_ = 0;
   uint8_t send_next_command_();
   uint8_t send_command_again();
+
+  void loop_streaming_();
 
   void emit_(BmsEmit emit);
 
