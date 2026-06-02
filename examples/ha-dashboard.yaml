@@ -1,0 +1,790 @@
+# =============================================================================
+# Pytes E-Box / Pylontech - Home Assistant Lovelace dashboard (built-in cards)
+# =============================================================================
+#
+# Drop-in dashboard for a 4-battery stack monitored via the pytes_e_box
+# ESPHome component. Uses only built-in Lovelace cards - no HACS required.
+#
+# Usage:
+#   1) Settings -> Dashboards -> "+ ADD DASHBOARD" -> New dashboard from scratch
+#   2) Open it, top-right "..." -> "Edit Dashboard" -> "..." -> "Raw configuration editor"
+#   3) Replace the contents with this file.
+#
+# Assumes the sub-device package
+#   examples/packages/pytesebox-monitor-sub-device.yaml
+# is included 4x with battery_num: 1..4 and the defaults
+#   battery_prefix: "Battery"
+#   cell_prefix:    "Cell"
+# which produce HA entity IDs like:
+#   sensor.battery_1_voltage, sensor.battery_1_current,
+#   sensor.battery_1_state_of_charge, sensor.cell_1_0_voltage, ...
+#
+# If your entities are named differently, search-and-replace `battery_1` (and
+# `cell_1_`) with your prefix. For fewer batteries, delete the unused blocks.
+#
+# Note: the shipped package has the typo "Voltage Hight" -> entity ends in
+# `_voltage_hight`. This dashboard uses that exact ID for compatibility.
+# =============================================================================
+
+title: Pytes Stack
+views:
+  # ---------------------------------------------------------------------------
+  # View 1 - Stack overview
+  # ---------------------------------------------------------------------------
+  - title: Stack
+    path: stack
+    icon: mdi:battery-charging
+
+    cards:
+      # ----- State of Charge gauges (all 4 batteries) -----
+      - type: markdown
+        content: "## State of Charge"
+
+      - type: horizontal-stack
+        cards:
+          - type: gauge
+            entity: sensor.battery_1_state_of_charge
+            name: Battery 1
+            min: 0
+            max: 100
+            unit: "%"
+            severity:
+              green: 50
+              yellow: 20
+              red: 0
+          - type: gauge
+            entity: sensor.battery_2_state_of_charge
+            name: Battery 2
+            min: 0
+            max: 100
+            unit: "%"
+            severity:
+              green: 50
+              yellow: 20
+              red: 0
+          - type: gauge
+            entity: sensor.battery_3_state_of_charge
+            name: Battery 3
+            min: 0
+            max: 100
+            unit: "%"
+            severity:
+              green: 50
+              yellow: 20
+              red: 0
+          - type: gauge
+            entity: sensor.battery_4_state_of_charge
+            name: Battery 4
+            min: 0
+            max: 100
+            unit: "%"
+            severity:
+              green: 50
+              yellow: 20
+              red: 0
+
+      # ----- Per-battery overview (gauge | details | states) -----
+      - type: markdown
+        content: "## Per-Battery Overview"
+
+      # Battery 1
+      - type: horizontal-stack
+        cards:
+          - type: gauge
+            entity: sensor.battery_1_state_of_charge
+            name: SoC
+            min: 0
+            max: 100
+            unit: "%"
+            severity: { green: 50, yellow: 20, red: 0 }
+          - type: entities
+            title: Battery 1
+            show_header_toggle: false
+            entities:
+              - entity: sensor.battery_1_voltage
+                name: Voltage
+              - entity: sensor.battery_1_current
+                name: Current
+              - entity: sensor.battery_1_temperature
+                name: Temperature
+              - entity: sensor.battery_1_temperature_low
+                name: Temp Low
+              - entity: sensor.battery_1_temperature_high
+                name: Temp High
+              - entity: sensor.battery_1_voltage_low
+                name: Cell V Low
+              - entity: sensor.battery_1_voltage_hight
+                name: Cell V High
+              - entity: sensor.battery_1_cells
+                name: Cell Count
+          - type: glance
+            title: States
+            show_state: true
+            entities:
+              - entity: sensor.battery_1_base_state
+                name: Base
+              - entity: sensor.battery_1_voltage_state
+                name: Voltage
+              - entity: sensor.battery_1_current_state
+                name: Current
+              - entity: sensor.battery_1_temperature_state
+                name: Temp
+
+      # Battery 2
+      - type: horizontal-stack
+        cards:
+          - type: gauge
+            entity: sensor.battery_2_state_of_charge
+            name: SoC
+            min: 0
+            max: 100
+            unit: "%"
+            severity: { green: 50, yellow: 20, red: 0 }
+          - type: entities
+            title: Battery 2
+            show_header_toggle: false
+            entities:
+              - entity: sensor.battery_2_voltage
+                name: Voltage
+              - entity: sensor.battery_2_current
+                name: Current
+              - entity: sensor.battery_2_temperature
+                name: Temperature
+              - entity: sensor.battery_2_temperature_low
+                name: Temp Low
+              - entity: sensor.battery_2_temperature_high
+                name: Temp High
+              - entity: sensor.battery_2_voltage_low
+                name: Cell V Low
+              - entity: sensor.battery_2_voltage_hight
+                name: Cell V High
+              - entity: sensor.battery_2_cells
+                name: Cell Count
+          - type: glance
+            title: States
+            show_state: true
+            entities:
+              - entity: sensor.battery_2_base_state
+                name: Base
+              - entity: sensor.battery_2_voltage_state
+                name: Voltage
+              - entity: sensor.battery_2_current_state
+                name: Current
+              - entity: sensor.battery_2_temperature_state
+                name: Temp
+
+      # Battery 3
+      - type: horizontal-stack
+        cards:
+          - type: gauge
+            entity: sensor.battery_3_state_of_charge
+            name: SoC
+            min: 0
+            max: 100
+            unit: "%"
+            severity: { green: 50, yellow: 20, red: 0 }
+          - type: entities
+            title: Battery 3
+            show_header_toggle: false
+            entities:
+              - entity: sensor.battery_3_voltage
+                name: Voltage
+              - entity: sensor.battery_3_current
+                name: Current
+              - entity: sensor.battery_3_temperature
+                name: Temperature
+              - entity: sensor.battery_3_temperature_low
+                name: Temp Low
+              - entity: sensor.battery_3_temperature_high
+                name: Temp High
+              - entity: sensor.battery_3_voltage_low
+                name: Cell V Low
+              - entity: sensor.battery_3_voltage_hight
+                name: Cell V High
+              - entity: sensor.battery_3_cells
+                name: Cell Count
+          - type: glance
+            title: States
+            show_state: true
+            entities:
+              - entity: sensor.battery_3_base_state
+                name: Base
+              - entity: sensor.battery_3_voltage_state
+                name: Voltage
+              - entity: sensor.battery_3_current_state
+                name: Current
+              - entity: sensor.battery_3_temperature_state
+                name: Temp
+
+      # Battery 4
+      - type: horizontal-stack
+        cards:
+          - type: gauge
+            entity: sensor.battery_4_state_of_charge
+            name: SoC
+            min: 0
+            max: 100
+            unit: "%"
+            severity: { green: 50, yellow: 20, red: 0 }
+          - type: entities
+            title: Battery 4
+            show_header_toggle: false
+            entities:
+              - entity: sensor.battery_4_voltage
+                name: Voltage
+              - entity: sensor.battery_4_current
+                name: Current
+              - entity: sensor.battery_4_temperature
+                name: Temperature
+              - entity: sensor.battery_4_temperature_low
+                name: Temp Low
+              - entity: sensor.battery_4_temperature_high
+                name: Temp High
+              - entity: sensor.battery_4_voltage_low
+                name: Cell V Low
+              - entity: sensor.battery_4_voltage_hight
+                name: Cell V High
+              - entity: sensor.battery_4_cells
+                name: Cell Count
+          - type: glance
+            title: States
+            show_state: true
+            entities:
+              - entity: sensor.battery_4_base_state
+                name: Base
+              - entity: sensor.battery_4_voltage_state
+                name: Voltage
+              - entity: sensor.battery_4_current_state
+                name: Current
+              - entity: sensor.battery_4_temperature_state
+                name: Temp
+
+      # ----- Status & Events (2x2 grid) -----
+      - type: markdown
+        content: "## Status & Events"
+
+      - type: grid
+        columns: 2
+        square: false
+        cards:
+          - type: entities
+            title: Battery 1 Status
+            show_header_toggle: false
+            entities:
+              - entity: sensor.battery_1_base_state
+                name: Base State
+              - entity: sensor.battery_1_battery_state
+                name: Battery Status
+              - entity: sensor.battery_1_coulomb_state
+                name: Coulomb Status
+              - entity: sensor.battery_1_cmos_status
+                name: CMOS Status
+              - entity: sensor.battery_1_dmos_status
+                name: DMOS Status
+              - entity: sensor.battery_1_bat_protect_ena
+                name: Bat Protect ENA
+              - entity: sensor.battery_1_pwr_protect_ena
+                name: Pwr Protect ENA
+              - entity: sensor.battery_1_battery_events
+                name: Battery Events
+              - entity: sensor.battery_1_power_events
+                name: Power Events
+              - entity: sensor.battery_1_system_fault
+                name: System Fault
+          - type: entities
+            title: Battery 2 Status
+            show_header_toggle: false
+            entities:
+              - entity: sensor.battery_2_base_state
+                name: Base State
+              - entity: sensor.battery_2_battery_state
+                name: Battery Status
+              - entity: sensor.battery_2_coulomb_state
+                name: Coulomb Status
+              - entity: sensor.battery_2_cmos_status
+                name: CMOS Status
+              - entity: sensor.battery_2_dmos_status
+                name: DMOS Status
+              - entity: sensor.battery_2_bat_protect_ena
+                name: Bat Protect ENA
+              - entity: sensor.battery_2_pwr_protect_ena
+                name: Pwr Protect ENA
+              - entity: sensor.battery_2_battery_events
+                name: Battery Events
+              - entity: sensor.battery_2_power_events
+                name: Power Events
+              - entity: sensor.battery_2_system_fault
+                name: System Fault
+          - type: entities
+            title: Battery 3 Status
+            show_header_toggle: false
+            entities:
+              - entity: sensor.battery_3_base_state
+                name: Base State
+              - entity: sensor.battery_3_battery_state
+                name: Battery Status
+              - entity: sensor.battery_3_coulomb_state
+                name: Coulomb Status
+              - entity: sensor.battery_3_cmos_status
+                name: CMOS Status
+              - entity: sensor.battery_3_dmos_status
+                name: DMOS Status
+              - entity: sensor.battery_3_bat_protect_ena
+                name: Bat Protect ENA
+              - entity: sensor.battery_3_pwr_protect_ena
+                name: Pwr Protect ENA
+              - entity: sensor.battery_3_battery_events
+                name: Battery Events
+              - entity: sensor.battery_3_power_events
+                name: Power Events
+              - entity: sensor.battery_3_system_fault
+                name: System Fault
+          - type: entities
+            title: Battery 4 Status
+            show_header_toggle: false
+            entities:
+              - entity: sensor.battery_4_base_state
+                name: Base State
+              - entity: sensor.battery_4_battery_state
+                name: Battery Status
+              - entity: sensor.battery_4_coulomb_state
+                name: Coulomb Status
+              - entity: sensor.battery_4_cmos_status
+                name: CMOS Status
+              - entity: sensor.battery_4_dmos_status
+                name: DMOS Status
+              - entity: sensor.battery_4_bat_protect_ena
+                name: Bat Protect ENA
+              - entity: sensor.battery_4_pwr_protect_ena
+                name: Pwr Protect ENA
+              - entity: sensor.battery_4_battery_events
+                name: Battery Events
+              - entity: sensor.battery_4_power_events
+                name: Power Events
+              - entity: sensor.battery_4_system_fault
+                name: System Fault
+
+      # ----- Device info (2x2 grid) -----
+      - type: markdown
+        content: "## Device Info"
+
+      - type: grid
+        columns: 2
+        square: false
+        cards:
+          - type: entities
+            title: Battery 1
+            show_header_toggle: false
+            entities:
+              - entity: sensor.battery_1_barcode
+                name: Barcode
+              - entity: sensor.battery_1_device_type
+                name: Device Type
+              - entity: sensor.battery_1_firm_version
+                name: Firmware
+          - type: entities
+            title: Battery 2
+            show_header_toggle: false
+            entities:
+              - entity: sensor.battery_2_barcode
+                name: Barcode
+              - entity: sensor.battery_2_device_type
+                name: Device Type
+              - entity: sensor.battery_2_firm_version
+                name: Firmware
+          - type: entities
+            title: Battery 3
+            show_header_toggle: false
+            entities:
+              - entity: sensor.battery_3_barcode
+                name: Barcode
+              - entity: sensor.battery_3_device_type
+                name: Device Type
+              - entity: sensor.battery_3_firm_version
+                name: Firmware
+          - type: entities
+            title: Battery 4
+            show_header_toggle: false
+            entities:
+              - entity: sensor.battery_4_barcode
+                name: Barcode
+              - entity: sensor.battery_4_device_type
+                name: Device Type
+              - entity: sensor.battery_4_firm_version
+                name: Firmware
+
+      # ----- History graphs (combined across all 4 batteries) -----
+      - type: markdown
+        content: "## History (24 h)"
+
+      - type: statistics-graph
+        title: Pack Voltage
+        chart_type: line
+        period: hour
+        days_to_show: 1
+        stat_types:
+          - mean
+        entities:
+          - sensor.battery_1_voltage
+          - sensor.battery_2_voltage
+          - sensor.battery_3_voltage
+          - sensor.battery_4_voltage
+
+      - type: statistics-graph
+        title: Pack Current
+        chart_type: line
+        period: hour
+        days_to_show: 1
+        stat_types:
+          - mean
+        entities:
+          - sensor.battery_1_current
+          - sensor.battery_2_current
+          - sensor.battery_3_current
+          - sensor.battery_4_current
+
+      - type: statistics-graph
+        title: State of Charge
+        chart_type: line
+        period: hour
+        days_to_show: 1
+        stat_types:
+          - mean
+        entities:
+          - sensor.battery_1_state_of_charge
+          - sensor.battery_2_state_of_charge
+          - sensor.battery_3_state_of_charge
+          - sensor.battery_4_state_of_charge
+
+      - type: statistics-graph
+        title: Pack Temperature
+        chart_type: line
+        period: hour
+        days_to_show: 1
+        stat_types:
+          - mean
+        entities:
+          - sensor.battery_1_temperature
+          - sensor.battery_2_temperature
+          - sensor.battery_3_temperature
+          - sensor.battery_4_temperature
+
+  # ---------------------------------------------------------------------------
+  # View 2 - Cells (16 cells per battery)
+  # ---------------------------------------------------------------------------
+  - title: Cells
+    path: cells
+    icon: mdi:view-grid
+
+    cards:
+      - type: markdown
+        content: "## Cell Voltages"
+
+      - type: grid
+        columns: 2
+        square: false
+        cards:
+          - type: glance
+            title: Battery 1
+            columns: 8
+            show_state: true
+            entities:
+              - entity: sensor.cell_1_0_voltage
+                name: "0"
+              - entity: sensor.cell_1_1_voltage
+                name: "1"
+              - entity: sensor.cell_1_2_voltage
+                name: "2"
+              - entity: sensor.cell_1_3_voltage
+                name: "3"
+              - entity: sensor.cell_1_4_voltage
+                name: "4"
+              - entity: sensor.cell_1_5_voltage
+                name: "5"
+              - entity: sensor.cell_1_6_voltage
+                name: "6"
+              - entity: sensor.cell_1_7_voltage
+                name: "7"
+              - entity: sensor.cell_1_8_voltage
+                name: "8"
+              - entity: sensor.cell_1_9_voltage
+                name: "9"
+              - entity: sensor.cell_1_10_voltage
+                name: "10"
+              - entity: sensor.cell_1_11_voltage
+                name: "11"
+              - entity: sensor.cell_1_12_voltage
+                name: "12"
+              - entity: sensor.cell_1_13_voltage
+                name: "13"
+              - entity: sensor.cell_1_14_voltage
+                name: "14"
+              - entity: sensor.cell_1_15_voltage
+                name: "15"
+          - type: glance
+            title: Battery 2
+            columns: 8
+            show_state: true
+            entities:
+              - entity: sensor.cell_2_0_voltage
+                name: "0"
+              - entity: sensor.cell_2_1_voltage
+                name: "1"
+              - entity: sensor.cell_2_2_voltage
+                name: "2"
+              - entity: sensor.cell_2_3_voltage
+                name: "3"
+              - entity: sensor.cell_2_4_voltage
+                name: "4"
+              - entity: sensor.cell_2_5_voltage
+                name: "5"
+              - entity: sensor.cell_2_6_voltage
+                name: "6"
+              - entity: sensor.cell_2_7_voltage
+                name: "7"
+              - entity: sensor.cell_2_8_voltage
+                name: "8"
+              - entity: sensor.cell_2_9_voltage
+                name: "9"
+              - entity: sensor.cell_2_10_voltage
+                name: "10"
+              - entity: sensor.cell_2_11_voltage
+                name: "11"
+              - entity: sensor.cell_2_12_voltage
+                name: "12"
+              - entity: sensor.cell_2_13_voltage
+                name: "13"
+              - entity: sensor.cell_2_14_voltage
+                name: "14"
+              - entity: sensor.cell_2_15_voltage
+                name: "15"
+          - type: glance
+            title: Battery 3
+            columns: 8
+            show_state: true
+            entities:
+              - entity: sensor.cell_3_0_voltage
+                name: "0"
+              - entity: sensor.cell_3_1_voltage
+                name: "1"
+              - entity: sensor.cell_3_2_voltage
+                name: "2"
+              - entity: sensor.cell_3_3_voltage
+                name: "3"
+              - entity: sensor.cell_3_4_voltage
+                name: "4"
+              - entity: sensor.cell_3_5_voltage
+                name: "5"
+              - entity: sensor.cell_3_6_voltage
+                name: "6"
+              - entity: sensor.cell_3_7_voltage
+                name: "7"
+              - entity: sensor.cell_3_8_voltage
+                name: "8"
+              - entity: sensor.cell_3_9_voltage
+                name: "9"
+              - entity: sensor.cell_3_10_voltage
+                name: "10"
+              - entity: sensor.cell_3_11_voltage
+                name: "11"
+              - entity: sensor.cell_3_12_voltage
+                name: "12"
+              - entity: sensor.cell_3_13_voltage
+                name: "13"
+              - entity: sensor.cell_3_14_voltage
+                name: "14"
+              - entity: sensor.cell_3_15_voltage
+                name: "15"
+          - type: glance
+            title: Battery 4
+            columns: 8
+            show_state: true
+            entities:
+              - entity: sensor.cell_4_0_voltage
+                name: "0"
+              - entity: sensor.cell_4_1_voltage
+                name: "1"
+              - entity: sensor.cell_4_2_voltage
+                name: "2"
+              - entity: sensor.cell_4_3_voltage
+                name: "3"
+              - entity: sensor.cell_4_4_voltage
+                name: "4"
+              - entity: sensor.cell_4_5_voltage
+                name: "5"
+              - entity: sensor.cell_4_6_voltage
+                name: "6"
+              - entity: sensor.cell_4_7_voltage
+                name: "7"
+              - entity: sensor.cell_4_8_voltage
+                name: "8"
+              - entity: sensor.cell_4_9_voltage
+                name: "9"
+              - entity: sensor.cell_4_10_voltage
+                name: "10"
+              - entity: sensor.cell_4_11_voltage
+                name: "11"
+              - entity: sensor.cell_4_12_voltage
+                name: "12"
+              - entity: sensor.cell_4_13_voltage
+                name: "13"
+              - entity: sensor.cell_4_14_voltage
+                name: "14"
+              - entity: sensor.cell_4_15_voltage
+                name: "15"
+
+      - type: markdown
+        content: "## Cell Temperatures"
+
+      - type: grid
+        columns: 2
+        square: false
+        cards:
+          - type: glance
+            title: Battery 1
+            columns: 8
+            show_state: true
+            entities:
+              - entity: sensor.cell_1_0_temperature
+                name: "0"
+              - entity: sensor.cell_1_1_temperature
+                name: "1"
+              - entity: sensor.cell_1_2_temperature
+                name: "2"
+              - entity: sensor.cell_1_3_temperature
+                name: "3"
+              - entity: sensor.cell_1_4_temperature
+                name: "4"
+              - entity: sensor.cell_1_5_temperature
+                name: "5"
+              - entity: sensor.cell_1_6_temperature
+                name: "6"
+              - entity: sensor.cell_1_7_temperature
+                name: "7"
+              - entity: sensor.cell_1_8_temperature
+                name: "8"
+              - entity: sensor.cell_1_9_temperature
+                name: "9"
+              - entity: sensor.cell_1_10_temperature
+                name: "10"
+              - entity: sensor.cell_1_11_temperature
+                name: "11"
+              - entity: sensor.cell_1_12_temperature
+                name: "12"
+              - entity: sensor.cell_1_13_temperature
+                name: "13"
+              - entity: sensor.cell_1_14_temperature
+                name: "14"
+              - entity: sensor.cell_1_15_temperature
+                name: "15"
+          - type: glance
+            title: Battery 2
+            columns: 8
+            show_state: true
+            entities:
+              - entity: sensor.cell_2_0_temperature
+                name: "0"
+              - entity: sensor.cell_2_1_temperature
+                name: "1"
+              - entity: sensor.cell_2_2_temperature
+                name: "2"
+              - entity: sensor.cell_2_3_temperature
+                name: "3"
+              - entity: sensor.cell_2_4_temperature
+                name: "4"
+              - entity: sensor.cell_2_5_temperature
+                name: "5"
+              - entity: sensor.cell_2_6_temperature
+                name: "6"
+              - entity: sensor.cell_2_7_temperature
+                name: "7"
+              - entity: sensor.cell_2_8_temperature
+                name: "8"
+              - entity: sensor.cell_2_9_temperature
+                name: "9"
+              - entity: sensor.cell_2_10_temperature
+                name: "10"
+              - entity: sensor.cell_2_11_temperature
+                name: "11"
+              - entity: sensor.cell_2_12_temperature
+                name: "12"
+              - entity: sensor.cell_2_13_temperature
+                name: "13"
+              - entity: sensor.cell_2_14_temperature
+                name: "14"
+              - entity: sensor.cell_2_15_temperature
+                name: "15"
+          - type: glance
+            title: Battery 3
+            columns: 8
+            show_state: true
+            entities:
+              - entity: sensor.cell_3_0_temperature
+                name: "0"
+              - entity: sensor.cell_3_1_temperature
+                name: "1"
+              - entity: sensor.cell_3_2_temperature
+                name: "2"
+              - entity: sensor.cell_3_3_temperature
+                name: "3"
+              - entity: sensor.cell_3_4_temperature
+                name: "4"
+              - entity: sensor.cell_3_5_temperature
+                name: "5"
+              - entity: sensor.cell_3_6_temperature
+                name: "6"
+              - entity: sensor.cell_3_7_temperature
+                name: "7"
+              - entity: sensor.cell_3_8_temperature
+                name: "8"
+              - entity: sensor.cell_3_9_temperature
+                name: "9"
+              - entity: sensor.cell_3_10_temperature
+                name: "10"
+              - entity: sensor.cell_3_11_temperature
+                name: "11"
+              - entity: sensor.cell_3_12_temperature
+                name: "12"
+              - entity: sensor.cell_3_13_temperature
+                name: "13"
+              - entity: sensor.cell_3_14_temperature
+                name: "14"
+              - entity: sensor.cell_3_15_temperature
+                name: "15"
+          - type: glance
+            title: Battery 4
+            columns: 8
+            show_state: true
+            entities:
+              - entity: sensor.cell_4_0_temperature
+                name: "0"
+              - entity: sensor.cell_4_1_temperature
+                name: "1"
+              - entity: sensor.cell_4_2_temperature
+                name: "2"
+              - entity: sensor.cell_4_3_temperature
+                name: "3"
+              - entity: sensor.cell_4_4_temperature
+                name: "4"
+              - entity: sensor.cell_4_5_temperature
+                name: "5"
+              - entity: sensor.cell_4_6_temperature
+                name: "6"
+              - entity: sensor.cell_4_7_temperature
+                name: "7"
+              - entity: sensor.cell_4_8_temperature
+                name: "8"
+              - entity: sensor.cell_4_9_temperature
+                name: "9"
+              - entity: sensor.cell_4_10_temperature
+                name: "10"
+              - entity: sensor.cell_4_11_temperature
+                name: "11"
+              - entity: sensor.cell_4_12_temperature
+                name: "12"
+              - entity: sensor.cell_4_13_temperature
+                name: "13"
+              - entity: sensor.cell_4_14_temperature
+                name: "14"
+              - entity: sensor.cell_4_15_temperature
+                name: "15"
