@@ -136,11 +136,16 @@ BmsEmit PylontechDriver::parse_line(BmsCommandId cmd, const std::string &line, i
     return BmsEmit::NONE;
   this->bat_.coulomb = (float) coul.value();
 
-  // Skip Date, Time, B.V.St, B.T.St.
-  skip();
-  skip();
-  skip();
-  skip();
+  get_token(cursor, tok, sizeof(tok));
+  std::string date = tok;
+  get_token(cursor, tok, sizeof(tok));
+  if (!date.empty() && tok[0] != 0) {
+    this->bat_.device_time = date + " " + tok;
+  }
+  get_token(cursor, tok, sizeof(tok));
+  this->bat_.balance_voltage_state = tok;
+  get_token(cursor, tok, sizeof(tok));
+  this->bat_.balance_temperature_state = tok;
 
   if (!next_int(this->bat_.mos_temperature))
     return BmsEmit::NONE;

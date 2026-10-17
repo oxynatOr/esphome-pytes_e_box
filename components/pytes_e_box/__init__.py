@@ -1,81 +1,30 @@
-import logging
 import esphome.codegen as cg
-from esphome.components import uart
+from esphome.components import binary_sensor, sensor, uart
 import esphome.config_validation as cv
 from esphome.const import (
     CONF_ID,
-    CONF_NAME,
     CONF_TYPE,
+    DEVICE_CLASS_BATTERY,
+    DEVICE_CLASS_CONNECTIVITY,
+    DEVICE_CLASS_CURRENT,
+    DEVICE_CLASS_POWER,
+    ENTITY_CATEGORY_DIAGNOSTIC,
+    STATE_CLASS_MEASUREMENT,
+    STATE_CLASS_TOTAL_INCREASING,
+    UNIT_AMPERE,
+    UNIT_PERCENT,
+    UNIT_WATT,
 )
-
-_LOGGER = logging.getLogger(__name__)
 
 CODEOWNERS = ["@oxynatOr"]
 DEPENDENCIES = ["uart"]
-#AUTO_LOAD = ["sensor"]
+AUTO_LOAD = ["sensor", "binary_sensor"]
 MULTI_CONF = True
 
-## Helper
 CV_NUM_BATTERIES = cv.int_range(1, 16)
 CV_NUM_CELLS = cv.int_range(0, 15)
 
-
-
-
-# ICON_CONF_BASE_STATE          = "base_state"
-# ICON_CONF_VOLTAGE_STATE       = "voltage_state"
-# ICON_CONF_CURRENT_STATE       = "current_state"
-# ICON_CONF_TEMPERATURE_STATE   = "temperature_state"
-# ICON_CONF_BARCODE             = "barcode"
-# ICON_CONF_DEV_TYPE            = "dev_type"
-# ICON_CONF_FIRM_VERSION        = "firm_version"
-# ICON_CONF_COULOMB_STATUS      = "coulomb_status"
-# ICON_CONF_BAT_STATUS          = "bat_status"
-# ICON_CONF_CMOS_STATUS         = "cmos_status"
-# ICON_CONF_DMOS_STATUS         = "dmos_status"
-# ICON_CONF_BAT_PROTECT_ENA     = "bat_protect_ena"
-# ICON_CONF_PWR_PROTECT_ENA     = "pwr_protect_ena"
-# ICON_CONF_BAT_EVENTS          = "bat_events"
-# ICON_CONF_POWER_EVENTS        = "power_events"
-# ICON_CONF_SYSTEM_FAULT        = "system_fault"
-
-
-# ICON_CONF_COULOMB            = "coulomb"
-# ICON_CONF_TEMPERATURE_LOW    = "temperature_low"
-# ICON_CONF_TEMPERATURE_HIGH   = "temperature_high"
-# ICON_CONF_VOLTAGE_LOW        = "voltage_low"
-# ICON_CONF_VOLTAGE_HIGH       = "voltage_high"
-
-# ICON_CONF_SOC_VOLTAGE        = "soc_voltage"
-# ICON_CONF_TOTAL_COULOMB      = "total_coulomb"
-# ICON_CONF_REAL_COULOMB       = "real_coulomb"
-# ICON_CONF_TOTAL_POWER_IN     = "total_power_in"
-# ICON_CONF_TOTAL_POWER_OUT    = "total_power_out"
-# ICON_CONF_WORK_STATUS        = "work_status"
-# ICON_CONF_CELLS              = "cell_count"
-
-# ICON_CONF_CELL_VOLTAGE       = "voltage"
-# ICON_CONF_CELL_TEMPERATURE   = "temperature"
-# ICON_CONF_CELL_COULOMB       = "coulomb"
-# ICON_CONF_CELL_CURRENT       = "current"
-
-# ##Icons
-# ICON_CURRENT_DC = "mdi:current-dc"
-# ICON_MIN_VOLTAGE_CELL = "mdi:battery-minus-outline"
-# ICON_MAX_VOLTAGE_CELL = "mdi:battery-plus-outline"
-# ICON_BATTERY_STRINGS = "mdi:car-battery"
-# ICON_CAPACITY_REMAINING_DERIVED = "mdi:battery-50"
-# ICON_ACTUAL_BATTERY_CAPACITY = "mdi:battery-50"
-# ICON_TOTAL_BATTERY_CAPACITY_SETTING = "mdi:battery-sync"
-# ICON_DEVICE_ADDRESS = "mdi:identifier"
-# ICON_ERRORS_BITMASK = "mdi:alert-circle-outline"
-# ICON_OPERATION_MODE_BITMASK = "mdi:heart-pulse"
-# ICON_CHARGING_CYCLES = "mdi:battery-sync"
-# ICON_ALARM_LOW_VOLUME = "mdi:volume-high"
-
-##Custom 
 UNIT_AMPERE_HOURS = "Ah"
-UNIT_MILLI_AMPERE = "mA"
 
 pytes_e_box_ns = cg.esphome_ns.namespace("pytes_e_box")
 PytesEBoxComponent = pytes_e_box_ns.class_("PytesEBoxComponent", cg.PollingComponent, uart.UARTDevice)
@@ -91,14 +40,19 @@ BMS_TYPES = {
 }
 CONF_BATTERIES_COMPONENT = "batteries"
 CONF_POLL_TIMEOUT = "poll_timeout"
-CONF_CMD_IDLE_TIME = "command_idle_time" 
+CONF_CMD_IDLE_TIME = "command_idle_time"
+CONF_MAX_RETRIES = "max_retries"
 CONF_PYTES_E_BOX_ID = "pytes_e_box_id"
 CONF_CELL = "cell"
 CONF_BATTERY = "battery"
 CONF_CELL_ARRAYS = "cells"
 
+CONF_CONNECTED = "connected"
+CONF_ERROR_COUNT = "error_count"
+CONF_TOTAL_CURRENT = "total_current"
+CONF_TOTAL_POWER = "total_power"
+CONF_AVERAGE_SOC = "average_soc"
 
-#Sensors
 PytesEBoxBatteryTextSensor = pytes_e_box_ns.class_("PytesEBoxBatteryTextSensor", cg.Component)
 PytesEBoxBatteryCellTextSensor = pytes_e_box_ns.class_("PytesEBoxBatteryCellTextSensor", cg.Component)
 PytesEBoxBatterySensor = pytes_e_box_ns.class_("PytesEBoxBatterySensor", cg.Component)
@@ -111,6 +65,32 @@ PYTES_E_BOX_COMPONENT_SCHEMA = cv.Schema(
     }
 )
 
+HUB_SENSORS: dict[str, cv.Schema] = {
+    CONF_ERROR_COUNT: sensor.sensor_schema(
+        accuracy_decimals=0,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+        entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
+        icon="mdi:alert-circle-outline",
+    ),
+    CONF_TOTAL_CURRENT: sensor.sensor_schema(
+        unit_of_measurement=UNIT_AMPERE,
+        accuracy_decimals=3,
+        device_class=DEVICE_CLASS_CURRENT,
+        state_class=STATE_CLASS_MEASUREMENT,
+    ),
+    CONF_TOTAL_POWER: sensor.sensor_schema(
+        unit_of_measurement=UNIT_WATT,
+        accuracy_decimals=1,
+        device_class=DEVICE_CLASS_POWER,
+        state_class=STATE_CLASS_MEASUREMENT,
+    ),
+    CONF_AVERAGE_SOC: sensor.sensor_schema(
+        unit_of_measurement=UNIT_PERCENT,
+        accuracy_decimals=0,
+        device_class=DEVICE_CLASS_BATTERY,
+        state_class=STATE_CLASS_MEASUREMENT,
+    ),
+}
 
 CONFIG_SCHEMA = cv.All(
     cv.Schema(
@@ -119,12 +99,23 @@ CONFIG_SCHEMA = cv.All(
             cv.Optional(CONF_TYPE, default="pytes_e_box"): cv.enum(BMS_TYPES, lower=True),
             cv.Required(CONF_BATTERIES_COMPONENT): CV_NUM_BATTERIES,
             cv.Required(CONF_POLL_TIMEOUT): cv.positive_time_period_milliseconds,
-            cv.Optional(CONF_CMD_IDLE_TIME): cv.positive_time_period_milliseconds,
+            cv.Optional(CONF_CMD_IDLE_TIME, default="150ms"): cv.positive_time_period_milliseconds,
+            cv.Optional(CONF_MAX_RETRIES, default=2): cv.int_range(0, 10),
+            cv.Optional(CONF_CONNECTED): binary_sensor.binary_sensor_schema(
+                device_class=DEVICE_CLASS_CONNECTIVITY,
+                entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
+            ),
         }
     )
+    .extend({cv.Optional(key): schema for key, schema in HUB_SENSORS.items()})
     .extend(cv.polling_component_schema("15s"))
     .extend(uart.UART_DEVICE_SCHEMA)
 )
+
+FINAL_VALIDATE_SCHEMA = uart.final_validate_device_schema(
+    "pytes_e_box", baud_rate=115200, require_tx=True, require_rx=True, parity="NONE", stop_bits=1, data_bits=8
+)
+
 
 async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
@@ -132,5 +123,14 @@ async def to_code(config):
     cg.add(var.set_system_battery_count(config[CONF_BATTERIES_COMPONENT]))
     cg.add(var.set_polling_timeout(config[CONF_POLL_TIMEOUT]))
     cg.add(var.set_cmd_idle_time(config[CONF_CMD_IDLE_TIME]))
+    cg.add(var.set_max_retries(config[CONF_MAX_RETRIES]))
     await cg.register_component(var, config)
     await uart.register_uart_device(var, config)
+
+    if conf := config.get(CONF_CONNECTED):
+        sens = await binary_sensor.new_binary_sensor(conf)
+        cg.add(var.set_connected_binary_sensor(sens))
+    for key in HUB_SENSORS:
+        if conf := config.get(key):
+            sens = await sensor.new_sensor(conf)
+            cg.add(getattr(var, f"set_{key}_sensor")(sens))

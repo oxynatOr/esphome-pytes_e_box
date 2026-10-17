@@ -3,23 +3,27 @@
 #include "esphome/core/helpers.h"
 
 #include <algorithm>
+#include <cinttypes>
+#include <cmath>
 
 namespace esphome {
 namespace pytes_e_box {
 
-static const int MAX_DATA_LENGTH_BYTES = 4096;
-static const int MAX_DATA_LINE_LENGTH = 256;
-
 PytesEBoxComponent::PytesEBoxComponent() {}
 
 void PytesEBoxComponent::dump_config() {
-  this->check_uart_settings(115200, 1, esphome::uart::UART_CONFIG_PARITY_NONE, 8);
   ESP_LOGCONFIG(TAG, "PytesEBox:");
-  ESP_LOGCONFIG(TAG, "  Batteries: %d", this->battaries_in_system_);
-  ESP_LOGCONFIG(TAG, "  Poll Timeout: %d", this->polling_timeout_);
-  ESP_LOGCONFIG(TAG, "  Commands in Queue: %d", this->cmd_queue_.size());
-
+  ESP_LOGCONFIG(TAG, "  Batteries: %d", this->batteries_in_system_);
+  ESP_LOGCONFIG(TAG, "  Poll Timeout: %" PRIu32 " ms", this->polling_timeout_);
+  ESP_LOGCONFIG(TAG, "  Command Idle Time: %" PRIu32 " ms", this->command_idle_time_);
+  ESP_LOGCONFIG(TAG, "  Max Retries: %u", this->max_retries_);
+  ESP_LOGCONFIG(TAG, "  Commands in Queue: %u", (unsigned) this->cmd_queue_.size());
   LOG_UPDATE_INTERVAL(this);
+  LOG_BINARY_SENSOR("  ", "Connected", this->connected_binary_sensor_);
+  LOG_SENSOR("  ", "Error Count", this->error_count_sensor_);
+  LOG_SENSOR("  ", "Total Current", this->total_current_sensor_);
+  LOG_SENSOR("  ", "Total Power", this->total_power_sensor_);
+  LOG_SENSOR("  ", "Average SOC", this->average_soc_sensor_);
   if (this->is_failed()) {
     ESP_LOGE(TAG, "Connection with PytesEBox failed!");
   }
@@ -29,7 +33,7 @@ void PytesEBoxComponent::setup() {
   ESP_LOGCONFIG(TAG, "Setting up PytesEBox...");
   this->state_ = STATE_WAIT;
   this->clear_uart_buffer();
-  this->last_poll_ = -1;
+  this->reset_aggregates_();
 
   switch (this->driver_type_) {
     case BmsType::EXAMPLE:
@@ -46,8 +50,11 @@ void PytesEBoxComponent::setup() {
       this->driver_ = std::unique_ptr<BmsDriver>(new PytesDriver());
       break;
   }
-  this->driver_->build_commands(this->cmd_queue_, this->battaries_in_system_);
-  this->command_queue_max_ = this->cmd_queue_.size();
+  this->driver_->build_commands(this->cmd_queue_, this->batteries_in_system_);
+
+  if (this->error_count_sensor_ != nullptr) {
+    this->error_count_sensor_->publish_state(0);
+  }
 
   if (this->is_ready()) {
     this->state_ = STATE_IDLE;
@@ -55,46 +62,118 @@ void PytesEBoxComponent::setup() {
   }
 }
 
-uint8_t PytesEBoxComponent::send_command_again() {
-  if (this->state_ == STATE_WAIT) {
-    this->buffer_index_read_ = 0;
-    this->buffer_index_write_ = 0;
-    this->clear_uart_buffer();
-    this->write_str(this->cmd_queue_[this->command_queue_position_].command.c_str());
-    this->write_str("\n");
-    this->state_ = STATE_POLL;
-    ESP_LOGI(TAG, "Retrying command '%s' from index: %d, retry count: %d, at time: %lu ms",
-             this->cmd_queue_[this->command_queue_position_].command.c_str(), this->command_queue_position_,
-             this->command_retries_, millis());
-    this->command_retries_++;
-    return 1;
-  }
-  return 0;
+void PytesEBoxComponent::write_command_() {
+  this->buffer_index_read_ = 0;
+  this->buffer_index_write_ = 0;
+  this->clear_uart_buffer();
+  this->driver_->reset();
+  this->write_str(this->cmd_queue_[this->command_queue_position_].command.c_str());
+  this->write_str("\n");
+  this->last_poll_ = millis();
+  this->rx_bytes_ = 0;
+  this->state_ = STATE_POLL;
 }
 
-uint8_t PytesEBoxComponent::send_next_command_() {
-  if (this->cmd_queue_[this->command_queue_position_].command != "") {
-    this->buffer_index_read_ = 0;
-    this->buffer_index_write_ = 0;
-    this->command_retries_ = 0;
-    this->clear_uart_buffer();
-    if (this->driver_ != nullptr) {
-      this->driver_->reset();
+void PytesEBoxComponent::send_command_again_() {
+  this->command_retries_++;
+  ESP_LOGI(TAG, "Retrying command '%s' (%" PRIu32 "/%u)",
+           this->cmd_queue_[this->command_queue_position_].command.c_str(), this->command_retries_,
+           this->max_retries_);
+  this->write_command_();
+}
+
+bool PytesEBoxComponent::send_next_command_() {
+  if (this->command_queue_position_ >= this->cmd_queue_.size() ||
+      this->cmd_queue_[this->command_queue_position_].command.empty()) {
+    return false;
+  }
+  this->command_retries_ = 0;
+  this->write_command_();
+  ESP_LOGD(TAG, "Sending command from queue: %s from index: %d",
+           this->cmd_queue_[this->command_queue_position_].command.c_str(), this->command_queue_position_);
+  return true;
+}
+
+void PytesEBoxComponent::retry_or_advance_() {
+  if (this->command_retries_ < this->max_retries_) {
+    this->send_command_again_();
+    return;
+  }
+  if (this->max_retries_ > 0) {
+    ESP_LOGW(TAG, "Giving up on command '%s' after %" PRIu32 " retries",
+             this->cmd_queue_[this->command_queue_position_].command.c_str(), this->command_retries_);
+  }
+  this->clear_uart_buffer();
+  this->last_poll_ = millis();
+  this->state_ = STATE_SEND_NEXT_COMMAND;
+}
+
+void PytesEBoxComponent::record_error_() {
+  this->errors_++;
+  if (this->error_count_sensor_ != nullptr) {
+    this->error_count_sensor_->publish_state(this->errors_);
+  }
+}
+
+void PytesEBoxComponent::mark_success_() {
+  if (!this->cycle_ok_ && this->connected_binary_sensor_ != nullptr) {
+    this->connected_binary_sensor_->publish_state(true);
+  }
+  this->cycle_ok_ = true;
+}
+
+void PytesEBoxComponent::reset_aggregates_() {
+  std::fill(std::begin(this->agg_voltage_), std::end(this->agg_voltage_), NAN);
+  std::fill(std::begin(this->agg_current_), std::end(this->agg_current_), NAN);
+  std::fill(std::begin(this->agg_soc_), std::end(this->agg_soc_), NAN);
+}
+
+void PytesEBoxComponent::finish_cycle_() {
+  if (this->connected_binary_sensor_ != nullptr) {
+    this->connected_binary_sensor_->publish_state(this->cycle_ok_);
+  }
+
+  float current = 0, power = 0, soc = 0;
+  int n_current = 0, n_power = 0, n_soc = 0;
+  for (int i = 1; i <= MAX_BATTERIES; i++) {
+    if (!std::isnan(this->agg_current_[i])) {
+      current += this->agg_current_[i] / 1000.0f;
+      n_current++;
+      if (!std::isnan(this->agg_voltage_[i])) {
+        power += (this->agg_voltage_[i] / 1000.0f) * (this->agg_current_[i] / 1000.0f);
+        n_power++;
+      }
     }
-    this->write_str(this->cmd_queue_[this->command_queue_position_].command.c_str());
-    this->write_str("\n");
-    this->last_poll_ = millis();
-    this->state_ = STATE_POLL;
-    ESP_LOGD(TAG, "Sending command from queue: %s from index: %d",
-             this->cmd_queue_[this->command_queue_position_].command.c_str(), this->command_queue_position_);
-    return 1;
+    if (!std::isnan(this->agg_soc_[i])) {
+      soc += this->agg_soc_[i];
+      n_soc++;
+    }
   }
-  return 0;
+  if (this->total_current_sensor_ != nullptr && n_current > 0) {
+    this->total_current_sensor_->publish_state(current);
+  }
+  if (this->total_power_sensor_ != nullptr && n_power > 0) {
+    this->total_power_sensor_->publish_state(power);
+  }
+  if (this->average_soc_sensor_ != nullptr && n_soc > 0) {
+    this->average_soc_sensor_->publish_state(soc / n_soc);
+  }
+  this->reset_aggregates_();
+  this->cycle_ok_ = false;
 }
 
-void PytesEBoxComponent::emit_(BmsEmit emit) {
+void PytesEBoxComponent::emit_(BmsEmit emit, int index) {
   if (emit == BmsEmit::BATTERY) {
     const BmsBatteryData *data = &this->driver_->battery_data();
+    if (data->bat_num >= 1 && data->bat_num <= MAX_BATTERIES) {
+      if (!std::isnan(data->voltage))
+        this->agg_voltage_[data->bat_num] = data->voltage;
+      if (!std::isnan(data->current))
+        this->agg_current_[data->bat_num] = data->current;
+      if (!std::isnan(data->coulomb))
+        this->agg_soc_[data->bat_num] = data->coulomb;
+    }
+    this->mark_success_();
     for (BmsListener *listener : this->listeners_) {
       listener->on_battery_data(data);
     }
@@ -103,6 +182,10 @@ void PytesEBoxComponent::emit_(BmsEmit emit) {
     for (BmsListener *listener : this->listeners_) {
       listener->on_cell_data(data);
     }
+  } else if (emit == BmsEmit::CELL_BATCH_END) {
+    for (BmsListener *listener : this->listeners_) {
+      listener->on_cell_batch_complete(index);
+    }
   }
 }
 
@@ -110,6 +193,10 @@ void PytesEBoxComponent::update() {
   // Streaming drivers (e.g. Pylontech): fire the command once and let
   // loop_streaming_() parse whatever arrives, line by line.
   if (this->driver_ != nullptr && this->driver_->is_streaming()) {
+    if (this->cycle_started_) {
+      this->finish_cycle_();
+    }
+    this->cycle_started_ = true;
     this->buffer_index_read_ = 0;
     this->buffer_index_write_ = 0;
     for (auto &b : this->buffer_) {
@@ -124,12 +211,14 @@ void PytesEBoxComponent::update() {
     return;
   }
 
-  if (this->state_ == STATE_IDLE) {
-    this->command_queue_position_ = 0;
-    if (this->send_next_command_() == 0) {
-      ESP_LOGE(TAG, "Command failed: %s", this->cmd_queue_[this->command_queue_position_].command.c_str());
-      return;
-    }
+  if (this->state_ != STATE_IDLE) {
+    ESP_LOGD(TAG, "Previous polling cycle still running, skipping update");
+    return;
+  }
+  this->command_queue_position_ = 0;
+  this->cycle_ok_ = false;
+  if (!this->send_next_command_()) {
+    ESP_LOGE(TAG, "Command queue is empty");
   }
 }
 
@@ -158,10 +247,31 @@ void PytesEBoxComponent::loop_streaming_() {
   } else if (this->buffer_index_read_ != this->buffer_index_write_) {
     BmsCommandId cmd = this->cmd_queue_.empty() ? CMD_NIL : this->cmd_queue_[0].identifier;
     BmsEmit emit = this->driver_->parse_line(cmd, this->buffer_[this->buffer_index_read_], 0);
-    this->emit_(emit);
+    this->emit_(emit, 0);
     this->buffer_[this->buffer_index_read_].clear();
     this->buffer_index_read_ = (this->buffer_index_read_ + 1) % NUM_BUFFERS;
   }
+}
+
+int PytesEBoxComponent::readline_(int readch) {
+  if (readch <= 0) {
+    return -1;
+  }
+  switch (readch) {
+    case '\n':
+      break;
+    case '\r': {
+      int len = this->line_pos_;
+      this->line_pos_ = 0;
+      return len;
+    }
+    default:
+      if (this->line_pos_ < (int) sizeof(this->line_buf_) - 1) {
+        this->line_buf_[this->line_pos_++] = (char) readch;
+        this->line_buf_[this->line_pos_] = 0;
+      }
+  }
+  return -1;
 }
 
 /* only 1-line per run, otherwise we will block the component. */
@@ -176,18 +286,19 @@ void PytesEBoxComponent::loop() {
     return;
   }
 
-  /** check if we run into a "deathloop" or something is blocking */
-  if (millis() - this->last_poll_ > this->polling_timeout_) {
-    unsigned long elapsed = millis() - this->last_poll_;
-    this->last_poll_ = millis();
-    ESP_LOGE(TAG, "Timeout on command '%s': retry %d, elapsed %lu ms.",
-             this->cmd_queue_[this->command_queue_position_].command.c_str(), this->command_retries_, elapsed);
-
-    this->clear_uart_buffer();
-    this->state_ = STATE_SEND_NEXT_COMMAND;
-    if (this->command_queue_position_ == this->command_queue_max_) {
-      this->state_ = STATE_IDLE;
+  /** response did not arrive in time */
+  if (this->state_ != STATE_SEND_NEXT_COMMAND && millis() - this->last_poll_ > this->polling_timeout_) {
+    const char *command = this->cmd_queue_[this->command_queue_position_].command.c_str();
+    uint32_t elapsed = millis() - this->last_poll_;
+    this->record_error_();
+    if (this->rx_bytes_ == 0) {
+      ESP_LOGW(TAG, "Timeout on command '%s' after %" PRIu32 " ms: no bytes received - check RX wiring/pin/GND",
+               command, elapsed);
+    } else {
+      ESP_LOGW(TAG, "Timeout on command '%s' after %" PRIu32 " ms: %" PRIu32 " bytes received but no terminator",
+               command, elapsed, this->rx_bytes_);
     }
+    this->retry_or_advance_();
     return;
   }
 
@@ -197,28 +308,27 @@ void PytesEBoxComponent::loop() {
       return;
     }
 
-    this->command_queue_position_ = (this->command_queue_position_ + 1) % COMMAND_QUEUE_LENGTH;
-    if (this->command_queue_position_ == this->command_queue_max_) {
+    this->command_queue_position_++;
+    if (this->command_queue_position_ >= this->cmd_queue_.size()) {
       this->state_ = STATE_IDLE;
       ESP_LOGI(TAG, "PytesEBox command queue done.");
+      this->finish_cycle_();
       return;
     }
-    if (this->send_next_command_() == 0) {
+    if (!this->send_next_command_()) {
       ESP_LOGE(TAG, "Command failed: %s", this->cmd_queue_[this->command_queue_position_].command.c_str());
-      return;
     }
+    return;
   }
 
   /** full response received: emit accumulated data (if any) */
   if (this->state_ == STATE_COMMAND_COMPLETE) {
-    BmsEmit emit = this->driver_->command_complete(this->last_cmd_, this->cmd_queue_[this->command_queue_position_].index);
-    this->emit_(emit);
+    int index = this->cmd_queue_[this->command_queue_position_].index;
+    BmsEmit emit = this->driver_->command_complete(this->last_cmd_, index);
+    this->emit_(emit, index);
+    this->mark_success_();
     this->state_ = STATE_SEND_NEXT_COMMAND;
     ESP_LOGVV(TAG, "Command Complete, switch to STATE_SEND_NEXT_COMMAND");
-    if (this->command_queue_position_ == this->command_queue_max_) {
-      this->state_ = STATE_IDLE;
-      ESP_LOGVV(TAG, "Command Complete, switch to STATE_IDLE");
-    }
     return;
   }
 
@@ -229,9 +339,9 @@ void PytesEBoxComponent::loop() {
         this->state_ = STATE_SEND_NEXT_COMMAND;
         return;
       }
-      BmsEmit emit = this->driver_->parse_line(this->last_cmd_, this->buffer_[this->buffer_index_read_],
-                                               this->cmd_queue_[this->command_queue_position_].index);
-      this->emit_(emit);
+      int index = this->cmd_queue_[this->command_queue_position_].index;
+      BmsEmit emit = this->driver_->parse_line(this->last_cmd_, this->buffer_[this->buffer_index_read_], index);
+      this->emit_(emit, index);
 
       if (this->driver_->is_line_complete(this->buffer_[this->buffer_index_read_]) > 0) {
         ESP_LOGVV(TAG, "Command Complete, switch to STATE_COMMAND_COMPLETE");
@@ -247,8 +357,8 @@ void PytesEBoxComponent::loop() {
   if (this->state_ == STATE_POLL_DECODED) {
     if (this->buffer_index_read_ != this->buffer_index_write_) {
       if (this->last_cmd_ == CMD_NIL || this->last_cmd_ == CMD_ERROR) {
-        this->state_ = STATE_WAIT;
-        this->send_command_again();
+        this->record_error_();
+        this->retry_or_advance_();
         return;
       }
       if (!this->driver_->needs_line_preprocess(this->last_cmd_)) {
@@ -284,24 +394,20 @@ void PytesEBoxComponent::loop() {
 
   /** pull all the serial data from the buffer */
   if (this->state_ == STATE_POLL) {
-    if (this->available() < 0) {
-      this->state_ = STATE_WAIT;
-      this->send_command_again();
-      return;
-    }
     while (this->available()) {
-      static char buffer[MAX_DATA_LINE_LENGTH];
-      if (readline(read(), buffer, MAX_DATA_LENGTH_BYTES) > 0) {
-        this->buffer_[buffer_index_write_] = buffer;
-        ESP_LOGV(TAG, "(%d) %s", this->buffer_index_write_, buffer);
-        if (this->driver_->is_line_complete(this->buffer_[buffer_index_write_]) > 0) {
+      int c = this->read();
+      this->rx_bytes_++;
+      if (this->readline_(c) > 0) {
+        this->buffer_[this->buffer_index_write_] = this->line_buf_;
+        ESP_LOGV(TAG, "(%d) %s", this->buffer_index_write_, this->line_buf_);
+        if (this->driver_->is_line_complete(this->buffer_[this->buffer_index_write_]) > 0) {
           this->state_ = STATE_POLL_COMPLETE;
           ESP_LOGVV(TAG, "Command Complete, switch to STATE_POLL_COMPLETE");
         }
         this->buffer_index_write_ = (this->buffer_index_write_ + 1) % NUM_BUFFERS;
-      }  // readLine
-    }  // while available
-  }  /** Read UART Buffer End */
+      }
+    }
+  }
 }
 
 void PytesEBoxComponent::clear_uart_buffer() {
@@ -310,6 +416,7 @@ void PytesEBoxComponent::clear_uart_buffer() {
   while (this->available()) {
     this->read_byte(&byte);
   }
+  this->line_pos_ = 0;
 }
 
 float PytesEBoxComponent::get_setup_priority() const { return setup_priority::DATA; }

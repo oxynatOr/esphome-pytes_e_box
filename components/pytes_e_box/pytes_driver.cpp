@@ -5,7 +5,6 @@
 #include <cctype>
 #include <cstdio>
 #include <cstring>
-#include <regex>
 
 namespace esphome {
 namespace pytes_e_box {
@@ -15,7 +14,29 @@ static const char *const TAG = "pytes_e_box";
 static const uint8_t STR_MIN_LEN = 8;
 static const uint8_t STR_MAX_LEN = 60;
 
-static const std::regex TRIM_PATTERN("(^\\s|\\s{2,})");
+// Same result as std::regex_replace(line, "(^\s|\s{2,})", ""): drop one leading
+// whitespace char and every run of two or more whitespace chars.
+static void collapse_whitespace(std::string &line) {
+  std::string out;
+  out.reserve(line.size());
+  const size_t n = line.size();
+  size_t i = (n > 0 && isspace((unsigned char) line[0])) ? 1 : 0;
+  while (i < n) {
+    if (!isspace((unsigned char) line[i])) {
+      out += line[i++];
+      continue;
+    }
+    size_t j = i;
+    while (j < n && isspace((unsigned char) line[j])) {
+      j++;
+    }
+    if (j - i == 1) {
+      out += line[i];
+    }
+    i = j;
+  }
+  line.swap(out);
+}
 
 void PytesDriver::add_command_(std::vector<PollingCommand> &queue, const char *command, int index, BmsCommandId id) {
   PollingCommand cmd;
@@ -39,11 +60,11 @@ void PytesDriver::build_commands(std::vector<PollingCommand> &queue, int battery
 }
 
 BmsCommandId PytesDriver::read_command(const std::string &line) {
-  char cmd_[4];
+  char cmd_[8] = {0};
   int no_ = -1;
-  const int parsed = sscanf(line.c_str(), "PYTES>%s %d", cmd_, &no_);
+  const int parsed = sscanf(line.c_str(), "PYTES>%7s %d", cmd_, &no_);
   if (parsed <= 0) {
-    if (sscanf(line.c_str(), "%s %d", cmd_, &no_) <= 0) {
+    if (sscanf(line.c_str(), "%7s %d", cmd_, &no_) <= 0) {
       ESP_LOGE(TAG, "Line dont have 'Pytes>' tag: %s", line.c_str());
       return CMD_ERROR;
     }
@@ -77,7 +98,7 @@ int PytesDriver::is_line_complete(const std::string &line) {
 bool PytesDriver::needs_line_preprocess(BmsCommandId cmd) { return cmd == PYTES_PWR_INDEX; }
 
 void PytesDriver::preprocess_line(BmsCommandId cmd, std::string &line) {
-  line = std::regex_replace(line, TRIM_PATTERN, "");
+  collapse_whitespace(line);
 }
 
 std::string PytesDriver::command_to_string(BmsCommandId cmd) {
@@ -123,6 +144,9 @@ BmsEmit PytesDriver::command_complete(BmsCommandId cmd, int index) {
     this->bat_.bat_num = index;
     return BmsEmit::BATTERY;
   }
+  if (cmd == PYTES_BAT_INDEX) {
+    return BmsEmit::CELL_BATCH_END;
+  }
   return BmsEmit::NONE;
 }
 
@@ -132,14 +156,14 @@ bool PytesDriver::parse_pwr_line_(const std::string &line) {
   }
 
   int bat_num = 0, voltage, current, temperature, tlow, thigh, vlow, vhigh, coulomb;
-  int day, month, year, hour, minute, sec;
+  int date_a, date_b, date_c, hour, minute, sec;
   char base_st[STR_MIN_LEN], volt_st[STR_MIN_LEN], curr_st[STR_MIN_LEN], temp_st[STR_MIN_LEN];
   char bv_st[STR_MIN_LEN], bt_st[STR_MIN_LEN], serial_st[STR_MAX_LEN], devtype_st[STR_MAX_LEN];
 
   const int parsed = sscanf(                                                                       // NOLINT
-      line.c_str(), "%d %d %d %d %d %d %d %d %7s %7s %7s %7s %d%% %d-%d-%d %d:%d:%d %s %s %s %s",   // NOLINT
+      line.c_str(), "%d %d %d %d %d %d %d %d %7s %7s %7s %7s %d%% %d-%d-%d %d:%d:%d %7s %7s %59s %59s",  // NOLINT
       &bat_num, &voltage, &current, &temperature, &tlow, &thigh, &vlow, &vhigh,                    // NOLINT
-      base_st, volt_st, curr_st, temp_st, &coulomb, &day, &month, &year, &hour,                    // NOLINT
+      base_st, volt_st, curr_st, temp_st, &coulomb, &date_a, &date_b, &date_c, &hour,             // NOLINT
       &minute, &sec, bv_st, bt_st, serial_st, devtype_st);                                         // NOLINT
 
   if (parsed != 23) {
@@ -166,6 +190,12 @@ bool PytesDriver::parse_pwr_line_(const std::string &line) {
   this->bat_.voltage_state = volt_st;
   this->bat_.current_state = curr_st;
   this->bat_.temperature_state = temp_st;
+  this->bat_.balance_voltage_state = bv_st;
+  this->bat_.balance_temperature_state = bt_st;
+  char time_buf[24];
+  // Keep the date in the order the BMS prints it.
+  snprintf(time_buf, sizeof(time_buf), "%02d-%02d-%02d %02d:%02d:%02d", date_a, date_b, date_c, hour, minute, sec);
+  this->bat_.device_time = time_buf;
   return true;
 }
 
@@ -236,51 +266,51 @@ void PytesDriver::parse_pwr_index_(const std::string &line, int index) {
       this->bat_.total_power_out = (float) v;
   }
   if (line.rfind("Barcode:", 0) == 0) {
-    if (sscanf(line.c_str(), " Barcode: %[^\n]", buf) == 1)
+    if (sscanf(line.c_str(), " Barcode: %59[^\n\r]", buf) == 1)
       this->bat_.barcode = buf;
   }
   if (line.rfind("Firm Version:", 0) == 0) {
-    if (sscanf(line.c_str(), "Firm Version: %[^\n\r]", buf) == 1)
+    if (sscanf(line.c_str(), "Firm Version: %59[^\n\r]", buf) == 1)
       this->bat_.firm_version = buf;
   }
   if (line.rfind("Coul. Status:", 0) == 0) {
-    if (sscanf(line.c_str(), "Coul. Status: %[^\n]", buf) == 1)
+    if (sscanf(line.c_str(), "Coul. Status: %59[^\n\r]", buf) == 1)
       this->bat_.coulomb_status = buf;
   }
   if (line.rfind("Bat Status:", 0) == 0) {
-    if (sscanf(line.c_str(), "Bat Status: %[^\n]", buf) == 1)
+    if (sscanf(line.c_str(), "Bat Status: %59[^\n\r]", buf) == 1)
       this->bat_.bat_status = buf;
   }
   if (line.rfind("CMOS Status:", 0) == 0) {
-    if (sscanf(line.c_str(), " CMOS Status: %[^\n]", buf) == 1)
+    if (sscanf(line.c_str(), " CMOS Status: %59[^\n\r]", buf) == 1)
       this->bat_.cmos_status = buf;
   }
   if (line.rfind("DMOS Status:", 0) == 0) {
-    if (sscanf(line.c_str(), " DMOS Status: %[^\n]", buf) == 1)
+    if (sscanf(line.c_str(), " DMOS Status: %59[^\n\r]", buf) == 1)
       this->bat_.dmos_status = buf;
   }
   if (line.rfind("Bat Protect ENA :", 0) == 0) {
-    if (sscanf(line.c_str(), " Bat Protect ENA : %[^\n]", buf) == 1)
+    if (sscanf(line.c_str(), " Bat Protect ENA : %59[^\n\r]", buf) == 1)
       this->bat_.bat_protect_ena = buf;
   }
   if (line.rfind("Pwr Protect ENA :", 0) == 0) {
-    if (sscanf(line.c_str(), " Pwr Protect ENA : %[^\n]", buf) == 1)
+    if (sscanf(line.c_str(), " Pwr Protect ENA : %59[^\n\r]", buf) == 1)
       this->bat_.pwr_protect_ena = buf;
   }
   if (line.rfind("Bat Events:", 0) == 0) {
-    if (sscanf(line.c_str(), " Bat Events: %[^\n]", buf) == 1)
+    if (sscanf(line.c_str(), " Bat Events: %59[^\n\r]", buf) == 1)
       this->bat_.bat_events = buf;
   }
   if (line.rfind("Power Events:", 0) == 0) {
-    if (sscanf(line.c_str(), " Power Events: %[^\n]", buf) == 1)
+    if (sscanf(line.c_str(), " Power Events: %59[^\n\r]", buf) == 1)
       this->bat_.power_events = buf;
   }
   if (line.rfind("System Fault:", 0) == 0) {
-    if (sscanf(line.c_str(), " System Fault: %[^\n]", buf) == 1)
+    if (sscanf(line.c_str(), " System Fault: %59[^\n\r]", buf) == 1)
       this->bat_.system_fault = buf;
   }
   if (line.rfind("DevType:", 0) == 0) {
-    if (sscanf(line.c_str(), " DevType: %[^\n]", buf) == 1)
+    if (sscanf(line.c_str(), " DevType: %59[^\n\r]", buf) == 1)
       this->bat_.dev_type = buf;
   }
 }

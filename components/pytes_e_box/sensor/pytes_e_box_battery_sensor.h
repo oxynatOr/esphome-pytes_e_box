@@ -26,14 +26,19 @@ class PytesEBoxBatterySensor : public BmsListener, public Component {
   SUB_SENSOR(total_power_out)
   SUB_SENSOR(work_status)
   SUB_SENSOR(cell_count)
-
-  SUB_SENSOR(dev_datetime)
+  SUB_SENSOR(power)
+  SUB_SENSOR(cell_voltage_min)
+  SUB_SENSOR(cell_voltage_max)
+  SUB_SENSOR(cell_voltage_delta)
 
   void on_battery_data(const BmsBatteryData *data) override;
+  void on_cell_data(const BmsCellData *data) override;
+  void on_cell_batch_complete(int bat_num) override;
 
  protected:
-  int bat_num_;  
-
+  int bat_num_;
+  float cell_min_mv_{NAN};
+  float cell_max_mv_{NAN};
 };
 
 }  // namespace pytes_e_box

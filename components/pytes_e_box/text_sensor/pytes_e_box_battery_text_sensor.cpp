@@ -27,6 +27,9 @@ void PytesEBoxBatteryTextSensor::dump_config() {
   LOG_TEXT_SENSOR("  ", "Bat Events", this->bat_events_text_sensor_);
   LOG_TEXT_SENSOR("  ", "Power Events", this->power_events_text_sensor_);
   LOG_TEXT_SENSOR("  ", "System Fault", this->system_fault_text_sensor_);
+  LOG_TEXT_SENSOR("  ", "Device Time", this->device_time_text_sensor_);
+  LOG_TEXT_SENSOR("  ", "Balance Voltage State", this->balance_voltage_state_text_sensor_);
+  LOG_TEXT_SENSOR("  ", "Balance Temperature State", this->balance_temperature_state_text_sensor_);
 }
 
 void PytesEBoxBatteryTextSensor::on_battery_data(const BmsBatteryData *line) {
@@ -82,6 +85,15 @@ void PytesEBoxBatteryTextSensor::on_battery_data(const BmsBatteryData *line) {
   }
   if (this->system_fault_text_sensor_ != nullptr && !line->system_fault.empty()) {
     this->system_fault_text_sensor_->publish_state(line->system_fault);
+  }
+  if (this->device_time_text_sensor_ != nullptr && !line->device_time.empty()) {
+    this->device_time_text_sensor_->publish_state(line->device_time);
+  }
+  if (this->balance_voltage_state_text_sensor_ != nullptr && !line->balance_voltage_state.empty()) {
+    this->balance_voltage_state_text_sensor_->publish_state(line->balance_voltage_state);
+  }
+  if (this->balance_temperature_state_text_sensor_ != nullptr && !line->balance_temperature_state.empty()) {
+    this->balance_temperature_state_text_sensor_->publish_state(line->balance_temperature_state);
   }
 }
 

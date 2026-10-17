@@ -26,7 +26,18 @@ pytes_e_box:
     uart_id: uart01
     update_interval: 30s
     batteries: 2
-    poll_timeout: 4s 
+    poll_timeout: 4s
     command_idle_time: 150ms
+    max_retries: 2
+    connected:
+      name: "BMS Connected"
+    error_count:
+      name: "BMS Error Count"
+    total_current:
+      name: "Battery System Current"
+    total_power:
+      name: "Battery System Power"
+    average_soc:
+      name: "Battery System State of Charge"
 
 

@@ -47,6 +47,9 @@ struct BmsBatteryData {
   std::string bat_events;
   std::string power_events;
   std::string system_fault;
+  std::string device_time;
+  std::string balance_voltage_state;
+  std::string balance_temperature_state;
 };
 
 struct BmsCellData {

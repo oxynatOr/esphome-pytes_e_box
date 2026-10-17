@@ -27,8 +27,9 @@ struct PollingCommand {
 // new driver.
 enum class BmsType { PYTES_E_BOX, EXAMPLE, PYLONTECH, PYTES_LV1 };
 
-// What the host should publish after a parse step.
-enum class BmsEmit { NONE, BATTERY, CELL };
+// What the host should publish after a parse step. CELL_BATCH_END signals that
+// all cells of one battery have been reported.
+enum class BmsEmit { NONE, BATTERY, CELL, CELL_BATCH_END };
 
 // A protocol driver owns everything BMS-specific: the command set, how to
 // recognize a response, how to detect its end, and how to turn response lines

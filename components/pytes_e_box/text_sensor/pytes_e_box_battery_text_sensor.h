@@ -28,6 +28,9 @@ class PytesEBoxBatteryTextSensor : public BmsListener, public Component {
   SUB_TEXT_SENSOR(bat_events)
   SUB_TEXT_SENSOR(power_events)
   SUB_TEXT_SENSOR(system_fault)
+  SUB_TEXT_SENSOR(device_time)
+  SUB_TEXT_SENSOR(balance_voltage_state)
+  SUB_TEXT_SENSOR(balance_temperature_state)
 
   void on_battery_data(const BmsBatteryData *data) override;
 
