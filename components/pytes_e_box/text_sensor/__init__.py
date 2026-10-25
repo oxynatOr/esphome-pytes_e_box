@@ -1,15 +1,19 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.components import text_sensor
-from esphome.const import (
-    CONF_ID,
-    CONF_NAME,       
-    )
+from esphome.const import CONF_ID
 
-from .. import (pytes_e_box_ns ,CONF_PYTES_E_BOX_ID, PYTES_E_BOX_COMPONENT_SCHEMA, CONF_CELL, 
-                CONF_BATTERY, CONF_CELL_ARRAYS, CV_NUM_CELLS, CV_NUM_BATTERIES,
-                PytesEBoxBatteryTextSensor, PytesEBoxBatteryCellTextSensor
-                )
+from .. import (
+    CONF_BATTERY,
+    CONF_CELL,
+    CONF_CELL_ARRAYS,
+    CONF_PYTES_E_BOX_ID,
+    CV_NUM_BATTERIES,
+    CV_NUM_CELLS,
+    PYTES_E_BOX_COMPONENT_SCHEMA,
+    PytesEBoxBatteryCellTextSensor,
+    PytesEBoxBatteryTextSensor,
+)
 
 
 CONF_BASE_STATE = "base_state"
@@ -28,6 +32,9 @@ CONF_PWR_PROTECT_ENA = "pwr_protect_ena"
 CONF_BAT_EVENTS = "bat_events"
 CONF_POWER_EVENTS = "power_events"
 CONF_SYSTEM_FAULT = "system_fault"
+CONF_DEVICE_TIME = "device_time"
+CONF_BALANCE_VOLTAGE_STATE = "balance_voltage_state"
+CONF_BALANCE_TEMPERATURE_STATE = "balance_temperature_state"
 
 BAT_TYPES: list[str] = [
     CONF_BASE_STATE,
@@ -46,6 +53,9 @@ BAT_TYPES: list[str] = [
     CONF_BAT_EVENTS,
     CONF_POWER_EVENTS,
     CONF_SYSTEM_FAULT,
+    CONF_DEVICE_TIME,
+    CONF_BALANCE_VOLTAGE_STATE,
+    CONF_BALANCE_TEMPERATURE_STATE,
 ]
 
 CELL_TYPES: list[str] = [
@@ -60,7 +70,6 @@ CELLS_ARRAYS_SCHEMA = cv.ensure_list(
         {
             cv.GenerateID(): cv.declare_id(PytesEBoxBatteryCellTextSensor),
             cv.Required(CONF_CELL): CV_NUM_CELLS,
-            cv.Optional(CONF_NAME): cv.string_strict,
         }
     ).extend({cv.Optional(marker): text_sensor.text_sensor_schema() for marker in CELL_TYPES})
 )
@@ -69,7 +78,6 @@ CONFIG_SCHEMA = PYTES_E_BOX_COMPONENT_SCHEMA.extend(
         {
             cv.GenerateID(): cv.declare_id(PytesEBoxBatteryTextSensor),
             cv.Required(CONF_BATTERY): CV_NUM_BATTERIES,
-            cv.Optional(CONF_NAME): cv.string_strict,
             cv.Optional(CONF_CELL_ARRAYS): CELLS_ARRAYS_SCHEMA,
         }
     ).extend({cv.Optional(marker): text_sensor.text_sensor_schema() for marker in BAT_TYPES})
@@ -78,19 +86,19 @@ CONFIG_SCHEMA = PYTES_E_BOX_COMPONENT_SCHEMA.extend(
 async def to_code(config):
     paren = await cg.get_variable(config[CONF_PYTES_E_BOX_ID])
 
-    if CONF_BATTERY in config:
-        bat = cg.new_Pvariable(config[CONF_ID], config[CONF_BATTERY])
-        for marker in BAT_TYPES:
-            if marker_config := config.get(marker):
-                sens = await text_sensor.new_text_sensor(marker_config)                
-                cg.add(getattr(bat, f"set_{marker}_text_sensor")(sens))
-        cg.add(paren.register_listener(bat))    
+    bat = cg.new_Pvariable(config[CONF_ID], config[CONF_BATTERY])
+    await cg.register_component(bat, config)
+    for marker in BAT_TYPES:
+        if marker_config := config.get(marker):
+            sens = await text_sensor.new_text_sensor(marker_config)
+            cg.add(getattr(bat, f"set_{marker}_text_sensor")(sens))
+    cg.add(paren.register_listener(bat))
 
-    if CONF_CELL_ARRAYS in config:
-        for cells_config in config[CONF_CELL_ARRAYS]:
-            cell_var = cg.new_Pvariable(cells_config[CONF_ID], config[CONF_BATTERY], cells_config[CONF_CELL])
-            for marker in CELL_TYPES:
-                if marker in cells_config:                    
-                    sens = await text_sensor.new_text_sensor(cells_config[marker])
-                    cg.add(getattr(cell_var, f"set_{marker}_text_sensor")(sens))
-            cg.add(paren.register_listener(cell_var))
+    for cells_config in config.get(CONF_CELL_ARRAYS, []):
+        cell_var = cg.new_Pvariable(cells_config[CONF_ID], config[CONF_BATTERY], cells_config[CONF_CELL])
+        await cg.register_component(cell_var, cells_config)
+        for marker in CELL_TYPES:
+            if marker in cells_config:
+                sens = await text_sensor.new_text_sensor(cells_config[marker])
+                cg.add(getattr(cell_var, f"set_{marker}_text_sensor")(sens))
+        cg.add(paren.register_listener(cell_var))

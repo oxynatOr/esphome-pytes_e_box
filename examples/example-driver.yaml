@@ -1,0 +1,54 @@
+# Minimal example for the template "example" BMS driver.
+# Replace `type: example` with `type: pytes_e_box` (or omit it) for a real
+# Pytes E-Box battery.
+
+esphome:
+  name: bms-monitor
+esp32:
+  board: esp32dev
+
+logger:
+
+# Load this repository as an external component. Point `path` at the local
+# checkout, or use a GitHub source instead.
+external_components:
+  - source:
+      type: local
+      path: ../components
+
+uart:
+  id: uart01
+  tx_pin: GPIO17
+  rx_pin: GPIO16
+  baud_rate: 115200
+  rx_buffer_size: 1024
+
+pytes_e_box:
+  - id: bms01
+    type: example          # template driver; default is `pytes_e_box`
+    uart_id: uart01
+    batteries: 2
+    update_interval: 30s
+    poll_timeout: 4s
+    command_idle_time: 150ms
+
+sensor:
+  - platform: pytes_e_box
+    pytes_e_box_id: bms01
+    battery: 1
+    voltage:
+      name: "Battery 1 Voltage"
+    current:
+      name: "Battery 1 Current"
+    temperature:
+      name: "Battery 1 Temperature"
+    coulomb:
+      name: "Battery 1 State of Charge"
+
+  - platform: pytes_e_box
+    pytes_e_box_id: bms01
+    battery: 2
+    voltage:
+      name: "Battery 2 Voltage"
+    coulomb:
+      name: "Battery 2 State of Charge"

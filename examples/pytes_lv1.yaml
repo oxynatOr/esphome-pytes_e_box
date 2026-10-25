@@ -1,0 +1,61 @@
+# Example for the Pytes LV1 Stack Battery.
+# Same console as the E-Box, but the `bat N` cell rows include a per-cell current
+# column, so `cells:` can expose `current:` in addition to voltage/temperature.
+
+esphome:
+  name: pytes-lv1-monitor
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+logger:
+
+external_components:
+  - source:
+      type: local
+      path: ../components
+
+uart:
+  id: uart01
+  tx_pin: GPIO17
+  rx_pin: GPIO16
+  baud_rate: 115200
+  rx_buffer_size: 1024
+
+pytes_e_box:
+  - id: bms01
+    type: pytes_lv1
+    uart_id: uart01
+    batteries: 1
+    update_interval: 30s
+    poll_timeout: 4s
+    command_idle_time: 150ms
+
+sensor:
+  - platform: pytes_e_box
+    pytes_e_box_id: bms01
+    battery: 1
+    voltage:
+      name: "Battery 1 Voltage"
+    current:
+      name: "Battery 1 Current"
+    coulomb:
+      name: "Battery 1 State of Charge"
+    temperature:
+      name: "Battery 1 Temperature"
+    cells:
+      - cell: 1
+        voltage:
+          name: "Cell 1.1 Voltage"
+        current:
+          name: "Cell 1.1 Current"
+        temperature:
+          name: "Cell 1.1 Temperature"
+
+text_sensor:
+  - platform: pytes_e_box
+    pytes_e_box_id: bms01
+    battery: 1
+    base_state:
+      name: "Battery 1 Base State"

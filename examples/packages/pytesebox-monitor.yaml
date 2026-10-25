@@ -230,6 +230,12 @@ text_sensor:
       name: "${battery_prefix} ${battery_num} Power Events"
     system_fault:
       name: "${battery_prefix} ${battery_num} System Fault"
+    device_time:
+      name: "${battery_prefix} ${battery_num} Device Time"
+    balance_voltage_state:
+      name: "${battery_prefix} ${battery_num} Balance Voltage State"
+    balance_temperature_state:
+      name: "${battery_prefix} ${battery_num} Balance Temperature State"
 
 sensor:
   - platform: pytes_e_box
@@ -410,3 +416,11 @@ sensor:
       name: "${battery_prefix} ${battery_num} Total Power Out"
     cell_count:
       name: "${battery_prefix} ${battery_num} Cells"
+    power:
+      name: "${battery_prefix} ${battery_num} Power"
+    cell_voltage_min:
+      name: "${battery_prefix} ${battery_num} Cell Voltage Min"
+    cell_voltage_max:
+      name: "${battery_prefix} ${battery_num} Cell Voltage Max"
+    cell_voltage_delta:
+      name: "${battery_prefix} ${battery_num} Cell Voltage Delta"

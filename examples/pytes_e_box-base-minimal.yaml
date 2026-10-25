@@ -37,7 +37,7 @@ sensor:
     temperature:
       name: "Battery 2 Temperature"
 
-textsensor:
+text_sensor:
   - platform: pytes_e_box
     pytes_e_box_id: pvbatt
     battery: 1
