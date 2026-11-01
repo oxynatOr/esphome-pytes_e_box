@@ -24,28 +24,62 @@ protocol variants (E-Box, LV1 stack, Pylontech, …) selected via a `type:` fiel
 ![pytesebox](https://github.com/user-attachments/assets/699cedf4-fe41-476b-9a39-41ebb7c520f5)
 
 
+Installation
+------------
+
+Add the component to your device YAML as an external component:
+
+```yaml
+external_components:
+  - source: github://oxynatOr/esphome-pytes_e_box
+    components: [ pytes_e_box ]
+    refresh: 1d
+```
+
+To test a branch before it is merged, pin it with `@<branch>` and set
+`refresh: 0s` so ESPHome always pulls the latest commit:
+
+```yaml
+external_components:
+  - source: github://oxynatOr/esphome-pytes_e_box@<branch>
+    components: [ pytes_e_box ]
+    refresh: 0s
+```
+
+
 Hardware Setup
 --------------
 
 Connect to the port labeled ***Console*** on the master battery. Any existing
 CAN or RS485 connections (e.g. to an inverter) are untouched and keep working.
+The CAN and RS485 ports are RJ45 jacks too, so check the label first.
 
-The console port is a **RS232** interface on an RJ45 connector. The voltage
-levels are *not* TTL-compatible — a RS232 transceiver must sit between the
-battery and the ESP. **MAX3232**-based transceivers have been tested and work
-well.
+The console port is a **RS232** interface on an RJ45 connector. RS232 uses
+about ±12 V and is *not* TTL-compatible — a RS232 transceiver must sit between
+the battery and the ESP. **MAX3232**-based transceivers have been tested and
+work well. Never connect the RJ45 pins directly to an ESP pin.
 
 In a stack, always wire to the **master** battery's console port; child
 batteries are reached through it.
 
-![rj45_pinout](https://github.com/user-attachments/assets/cb4f9808-333d-4344-b02e-18e8ffaf3341)
+![Wiring: battery console port, RS232 transceiver, ESP](documentation/rj45-wiring.svg)
 
-| ESP Pin | Transceiver | RJ45 Pin | Function |
-| --- | --- | --- | --- |
-| GPIO 6  | RX | ***3***  | TX     |
-| GND     | GND | ***4*** | Ground |
-| GPIO 5  | TX | ***6***  | RX     |
-| 3v3     | VCC | ***NC*** | Power |
+| Signal | RJ45 pin | Transceiver (RS232 side) | Transceiver (TTL side) | ESP |
+| --- | --- | --- | --- | --- |
+| Battery → ESP | ***3*** (battery TX) | RS232 in | TTL out | GPIO 6 (`rx_pin`) |
+| ESP → Battery | ***6*** (battery RX) | RS232 out | TTL in | GPIO 5 (`tx_pin`) |
+| Ground | ***4*** | GND | GND | GND |
+| Power | ***NC*** | – | VCC | 3v3 |
+
+Wire by the **function** in the table, not by the `RXD`/`TXD` labels on the
+board: some boards label from the module's point of view, others from the
+microcontroller's. If nothing arrives, swap the two data wires.
+
+The UART must run at **115200 baud, 8N1** with both `tx_pin` and `rx_pin`
+set. Other settings are rejected at config time.
+
+Pin numbering, a checklist for "nothing arrives" and a complete device YAML
+are in the [hardware guide](documentation/PCB.md).
 
 ### ESP32-S linker note
 
@@ -107,6 +141,13 @@ pytes_e_box:
     update_interval: 30s
     poll_timeout: 4s
     command_idle_time: 150ms
+    max_retries: 2
+    connected:
+      name: "BMS Connected"
+    error_count:
+      name: "BMS Error Count"
+    total_power:
+      name: "Battery System Power"
 ```
 
 ### Configuration variables
@@ -119,10 +160,27 @@ pytes_e_box:
   `1..16`.
 - **update_interval** (*Optional*, default `15s`): How often to poll the
   battery.
-- **poll_timeout** (***Required***): Maximum wait per command before retrying
-  (e.g. `4s`).
-- **command_idle_time** (*Optional*): Idle delay between commands
-  (e.g. `150ms`).
+- **poll_timeout** (***Required***): Maximum wait for the response to one
+  command (e.g. `4s`).
+- **command_idle_time** (*Optional*, default `150ms`): Idle delay between two
+  commands.
+- **max_retries** (*Optional*, default `2`): How often a command is resent
+  after a timeout before the component moves on to the next one. Range
+  `0..10`.
+
+#### Diagnostic and system sensors
+
+- **connected** (*Optional*): Binary sensor (`connectivity`). `on` as soon as
+  the battery answers, `off` when a whole polling cycle got no answer at all.
+  All options from [Binary Sensor](https://esphome.io/components/binary_sensor/#config-binary-sensor).
+- **error_count** (*Optional*): Number of timeouts and unrecognized responses
+  since boot (`total_increasing`, diagnostic).
+- **total_current** (*Optional*): Sum of the current of all batteries, in A.
+- **total_power** (*Optional*): Sum of the power of all batteries, in W.
+- **average_soc** (*Optional*): Mean State of Charge of all batteries, in %.
+
+The system sensors are published once per polling cycle. All accept the
+standard ESPHome [sensor options](https://esphome.io/components/sensor/#config-sensor).
 
 
 Sensor
@@ -158,9 +216,9 @@ sensor:
 #### Battery-level sensors
 
 - **voltage** (*Optional*): Battery pack voltage, in V.
-- **current** (*Optional*): Pack current; **reported in mA** by the device.
-  Add a `multiply: 0.001` filter and set `unit_of_measurement: A` if you want
-  amps. Negative when discharging.
+- **current** (*Optional*): Pack current, in A. Negative when discharging.
+- **power** (*Optional*): Pack power (voltage x current), in W. Negative when
+  discharging.
 - **temperature** (*Optional*): Pack temperature, in °C.
 - **temperature_low** / **temperature_high** (*Optional*): Historic min/max
   pack temperature, in °C.
@@ -168,15 +226,19 @@ sensor:
   highest cell, in V.
 - **coulomb** (*Optional*): State of Charge, in %.
 - **soc_voltage** (*Optional*): SoC reference voltage (Pytes only), in V.
-- **total_coulomb** (*Optional*): Total accumulated coulomb counter
+- **total_coulomb** (*Optional*): Total accumulated coulomb counter, in Ah
   (Pytes only).
-- **real_coulomb** (*Optional*): Real coulomb counter (Pytes only).
-- **total_power_in** / **total_power_out** (*Optional*): Cumulative energy
-  in / out (Pytes only).
+- **real_coulomb** (*Optional*): Real coulomb counter, in Ah (Pytes only).
+- **total_power_in** / **total_power_out** (*Optional*): Cumulative charge
+  in / out, in Ah (Pytes only).
 - **work_status** (*Optional*): Numeric work-status code (Pytes only).
 - **cell_count** (*Optional*): Number of cells reported by the battery
   (Pytes only).
 - **mos_temperature** (*Optional*): MOSFET temperature in °C (Pylontech only).
+- **cell_voltage_min** / **cell_voltage_max** (*Optional*): Lowest / highest
+  cell voltage of the last `bat N` readout, in V (Pytes only).
+- **cell_voltage_delta** (*Optional*): Difference between highest and lowest
+  cell, in V. A good indicator for cell balance (Pytes only).
 
 All accept the standard ESPHome [sensor options](https://esphome.io/components/sensor/#config-sensor)
 (filters, accuracy, device class, …).
@@ -186,8 +248,8 @@ All accept the standard ESPHome [sensor options](https://esphome.io/components/s
 - **cells** (*Optional*): List of cells to expose.
   - **cell** (***Required***): Cell index, `0..15`.
   - **voltage** (*Optional*): Cell voltage, in V.
-  - **current** (*Optional*): Cell current (reported in mA — see note above).
-    Only available where the BMS reports per-cell current (e.g. `pytes_lv1`).
+  - **current** (*Optional*): Cell current, in A. Only meaningful where the
+    BMS reports per-cell current (e.g. `pytes_lv1`).
   - **temperature** (*Optional*): Cell temperature, in °C.
   - **coulomb** (*Optional*): Cell-level SoC, in %.
 
@@ -226,6 +288,10 @@ text_sensor:
   bitmasks as text (Pytes only).
 - **bat_events** / **power_events** / **system_fault** (*Optional*): Event /
   fault flags as text (Pytes only).
+- **device_time** (*Optional*): Date and time of the battery clock, in the
+  order the BMS prints it.
+- **balance_voltage_state** / **balance_temperature_state** (*Optional*):
+  Balancing state for voltage / temperature (`B.V.St` / `B.T.St` columns).
 
 All accept the standard ESPHome
 [text_sensor options](https://esphome.io/components/text_sensor/#config-text-sensor).
@@ -241,36 +307,91 @@ All accept the standard ESPHome
 Examples
 --------
 
-Ready-to-use YAMLs in [`examples/`](examples/):
+YAMLs in [`examples/`](examples/). The first three are **snippets** you add
+to your own device YAML (together with the `external_components:` entry from
+[Installation](#installation)); the next three are **complete device
+configs** that load the component from the local `components/` folder.
+
+Snippets:
 
 - [`pytes_e_box-base-minimal.yaml`](examples/pytes_e_box-base-minimal.yaml) — smallest sensible config.
-- [`pytes_e_box-base.yaml`](examples/pytes_e_box-base.yaml) — typical multi-battery setup.
-- [`pytes_e_box-full.yaml`](examples/pytes_e_box-full.yaml) — every sensor exposed.
+- [`pytes_e_box-base.yaml`](examples/pytes_e_box-base.yaml) — hub only, typical multi-battery setup.
+- [`pytes_e_box-full.yaml`](examples/pytes_e_box-full.yaml) — every sensor exposed, using the packages below.
+
+Complete configs:
+
 - [`pytes_lv1.yaml`](examples/pytes_lv1.yaml) — Pytes LV1 stack with per-cell current.
 - [`pylontech.yaml`](examples/pylontech.yaml) — Pylontech US2000/US3000 family.
 - [`example-driver.yaml`](examples/example-driver.yaml) — template driver demo.
+
+Home Assistant:
+
 - [`ha-dashboard.yaml`](examples/ha-dashboard.yaml) — drop-in Home Assistant
   Lovelace dashboard for a 4-battery stack (built-in cards only, no HACS).
 
+### Packages
+
 The [`examples/packages/`](examples/packages/) folder contains reusable
-package files (`!include`-able per battery, with `device_id` sub-device
-support).
+package files, one include per battery:
+
+| Package | Use it for |
+| --- | --- |
+| [`pytesebox-monitor.yaml`](examples/packages/pytesebox-monitor.yaml) | Every sensor of one battery, including all cells |
+| [`pytesebox-monitor-sub-device.yaml`](examples/packages/pytesebox-monitor-sub-device.yaml) | The same, but each battery shows up as its own device in Home Assistant |
+
+Include paths are relative to the YAML that includes them. From a file in
+`examples/` that is `packages/pytesebox-monitor.yaml`, as in
+[`pytes_e_box-full.yaml`](examples/pytes_e_box-full.yaml). From anywhere else,
+use the GitHub form shown in the [hardware guide](documentation/PCB.md).
+
+The sub-device package assigns every entity to `device_id: battery_<n>`, so
+you have to declare those devices in your own YAML, one per battery:
+
+```yaml
+esphome:
+  devices:
+    - id: battery_1
+      name: "Battery 1"
+    - id: battery_2
+      name: "Battery 2"
+```
 
 
 Notes & troubleshooting
 -----------------------
 
-- **Current unit:** the component publishes battery and cell current as raw
-  **mA** (matching the device wire format). Add a `multiply: 0.001` filter and
-  `unit_of_measurement: A` in your YAML if you want amps. If one battery in a
-  stack shows a very different magnitude than the others, the raw value from
-  the device differs (mixed firmware or per-battery scale) — make the filter
-  per-battery rather than shared.
+- **Timeouts:** the log tells you which side is the problem.
+  - `no bytes received - check RX wiring/pin/GND`: nothing arrives at the ESP
+    at all. Check the transceiver, swapped RX/TX, GND and the `rx_pin`. A
+    loopback test (bridge RX and TX on the ESP) shows whether the UART itself
+    works.
+  - `N bytes received but no terminator`: the battery answers, but the
+    response is cut off or not recognized. Increase `poll_timeout` or check
+    the `type:`.
+- **Mixed magnitudes:** if one battery in a stack shows a very different
+  current than the others, the raw value from the device differs (mixed
+  firmware or per-battery scale). Use a per-battery filter rather than a
+  shared one.
 - **`pytes_lv1`** swaps the cell-line column order (`num volt curr tempr …`
   instead of `num volt tempr … curr`); the rest of the protocol is identical
   to `pytes_e_box`.
 - **`pylontech`** sends one `pwr` and parses the streamed response without a
   terminator handshake — there is no `pwr N` / `bat N` and no per-cell data.
+
+
+Upgrading from older versions
+-----------------------------
+
+- Battery and cell **current** are now published in **A** instead of mA.
+  Remove any `multiply: 0.001` filter you added for that. Home Assistant
+  switches the unit of the history once.
+- `total_coulomb`, `real_coulomb`, `total_power_in` and `total_power_out` are
+  now exact (no integer rounding), so the shown value can change slightly.
+- The sensor `dev_datetime` was removed (it never got a value). Use the text
+  sensor `device_time` instead.
+- `name:` directly under `battery:` or `cell:` is no longer accepted; give
+  each sensor its own `name:`.
+- `command_idle_time` is now optional (default `150ms`).
 
 
 <!-- LICENSE -->

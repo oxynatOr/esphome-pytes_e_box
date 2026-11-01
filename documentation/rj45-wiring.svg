@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 480" width="900" height="480" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="15">
+  <title>Wiring: battery console port (RJ45) to RS232 transceiver to ESP</title>
+  <defs>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1a7f37"/>
+    </marker>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#0969da"/>
+    </marker>
+  </defs>
+
+  <rect width="900" height="480" fill="#ffffff"/>
+
+  <!-- Battery -->
+  <rect x="30" y="60" width="210" height="250" rx="8" fill="#f6f8fa" stroke="#57606a" stroke-width="2"/>
+  <text x="135" y="88" text-anchor="middle" font-size="18" font-weight="bold" fill="#1f2328">Battery</text>
+  <text x="135" y="108" text-anchor="middle" font-size="13" fill="#57606a">Console port (RJ45)</text>
+  <text x="228" y="155" text-anchor="end" fill="#1f2328">pin 3 · TX</text>
+  <text x="228" y="205" text-anchor="end" fill="#1f2328">pin 6 · RX</text>
+  <text x="228" y="255" text-anchor="end" fill="#1f2328">pin 4 · GND</text>
+  <text x="228" y="290" text-anchor="end" font-size="13" fill="#57606a">VCC: not connected</text>
+
+  <!-- Transceiver -->
+  <rect x="330" y="60" width="240" height="250" rx="8" fill="#fff8e6" stroke="#9a6700" stroke-width="2"/>
+  <text x="450" y="88" text-anchor="middle" font-size="18" font-weight="bold" fill="#1f2328">RS232 transceiver</text>
+  <text x="450" y="108" text-anchor="middle" font-size="13" fill="#57606a">e.g. MAX3232 board</text>
+  <line x1="450" y1="122" x2="450" y2="298" stroke="#9a6700" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="390" y="134" text-anchor="middle" font-size="13" fill="#9a6700">RS232 ±12 V</text>
+  <text x="510" y="134" text-anchor="middle" font-size="13" fill="#9a6700">TTL 3.3 V</text>
+  <text x="342" y="155" fill="#1f2328">RS232 in</text>
+  <text x="342" y="205" fill="#1f2328">RS232 out</text>
+  <text x="342" y="255" fill="#1f2328">GND</text>
+  <text x="558" y="155" text-anchor="end" fill="#1f2328">TTL out</text>
+  <text x="558" y="205" text-anchor="end" fill="#1f2328">TTL in</text>
+  <text x="558" y="255" text-anchor="end" fill="#1f2328">GND</text>
+  <text x="558" y="290" text-anchor="end" fill="#1f2328">VCC</text>
+
+  <!-- ESP -->
+  <rect x="660" y="60" width="210" height="250" rx="8" fill="#eef6ff" stroke="#0969da" stroke-width="2"/>
+  <text x="765" y="88" text-anchor="middle" font-size="18" font-weight="bold" fill="#1f2328">ESP</text>
+  <text x="765" y="108" text-anchor="middle" font-size="13" fill="#57606a">ESPHome device</text>
+  <text x="672" y="155" fill="#1f2328">GPIO 6 · rx_pin</text>
+  <text x="672" y="205" fill="#1f2328">GPIO 5 · tx_pin</text>
+  <text x="672" y="255" fill="#1f2328">GND</text>
+  <text x="672" y="290" fill="#1f2328">3V3</text>
+
+  <!-- Data: battery TX -> ESP RX -->
+  <line x1="240" y1="150" x2="328" y2="150" stroke="#1a7f37" stroke-width="3" marker-end="url(#arrow-green)"/>
+  <line x1="570" y1="150" x2="658" y2="150" stroke="#1a7f37" stroke-width="3" marker-end="url(#arrow-green)"/>
+  <!-- Data: ESP TX -> battery RX -->
+  <line x1="658" y1="200" x2="572" y2="200" stroke="#0969da" stroke-width="3" marker-end="url(#arrow-blue)"/>
+  <line x1="328" y1="200" x2="242" y2="200" stroke="#0969da" stroke-width="3" marker-end="url(#arrow-blue)"/>
+  <!-- Ground -->
+  <line x1="240" y1="250" x2="330" y2="250" stroke="#24292f" stroke-width="3"/>
+  <line x1="570" y1="250" x2="660" y2="250" stroke="#24292f" stroke-width="3"/>
+  <!-- Power for the transceiver -->
+  <line x1="570" y1="285" x2="660" y2="285" stroke="#cf222e" stroke-width="3"/>
+
+  <text x="450" y="332" text-anchor="middle" font-size="14" font-weight="bold" fill="#cf222e">Never wire RS232 levels (±12 V) directly to ESP pins</text>
+
+  <!-- Plug orientation -->
+  <text x="30" y="366" font-size="15" font-weight="bold" fill="#1f2328">RJ45 plug: contacts facing you, cable pointing down</text>
+  <g stroke="#57606a" stroke-width="2" fill="#f6f8fa">
+    <rect x="60" y="378" width="40" height="46" rx="3"/>
+    <rect x="106" y="378" width="40" height="46" rx="3"/>
+    <rect x="152" y="378" width="40" height="46" rx="3" fill="#dafbe1" stroke="#1a7f37"/>
+    <rect x="198" y="378" width="40" height="46" rx="3" fill="#e6e6e6" stroke="#24292f"/>
+    <rect x="244" y="378" width="40" height="46" rx="3"/>
+    <rect x="290" y="378" width="40" height="46" rx="3" fill="#ddf4ff" stroke="#0969da"/>
+    <rect x="336" y="378" width="40" height="46" rx="3"/>
+    <rect x="382" y="378" width="40" height="46" rx="3"/>
+  </g>
+  <g font-size="16" font-weight="bold" fill="#1f2328" text-anchor="middle">
+    <text x="80" y="407">1</text>
+    <text x="126" y="407">2</text>
+    <text x="172" y="407">3</text>
+    <text x="218" y="407">4</text>
+    <text x="264" y="407">5</text>
+    <text x="310" y="407">6</text>
+    <text x="356" y="407">7</text>
+    <text x="402" y="407">8</text>
+  </g>
+  <g font-size="14" text-anchor="middle">
+    <text x="172" y="446" fill="#1a7f37">TX</text>
+    <text x="218" y="446" fill="#24292f">GND</text>
+    <text x="310" y="446" fill="#0969da">RX</text>
+  </g>
+  <text x="450" y="392" fill="#1f2328">Pin 1 is on the left.</text>
+  <text x="450" y="414" fill="#1f2328">Not connected: pins 1, 2, 5, 7, 8.</text>
+  <text x="450" y="436" fill="#57606a" font-size="13">Looking into the jack, latch slot on top: pin 1 is on the left, too.</text>
+</svg>

@@ -1,3 +1,5 @@
+# Snippet, not a complete device config: add it to your own device YAML.
+# It needs the `external_components:` entry from the README (Installation).
 uart:
   tx_pin: GPIO5
   rx_pin: GPIO6

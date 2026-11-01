@@ -1,5 +1,9 @@
 import esphome.codegen as cg
-from esphome.components import binary_sensor, sensor, uart
+from esphome.components import binary_sensor, uart
+
+# Our own sensor/ subpackage replaces the name "sensor" in this module once the
+# platform is loaded, so the ESPHome sensor component needs a different name.
+from esphome.components import sensor as sensor_comp
 import esphome.config_validation as cv
 from esphome.const import (
     CONF_ID,
@@ -66,25 +70,25 @@ PYTES_E_BOX_COMPONENT_SCHEMA = cv.Schema(
 )
 
 HUB_SENSORS: dict[str, cv.Schema] = {
-    CONF_ERROR_COUNT: sensor.sensor_schema(
+    CONF_ERROR_COUNT: sensor_comp.sensor_schema(
         accuracy_decimals=0,
         state_class=STATE_CLASS_TOTAL_INCREASING,
         entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
         icon="mdi:alert-circle-outline",
     ),
-    CONF_TOTAL_CURRENT: sensor.sensor_schema(
+    CONF_TOTAL_CURRENT: sensor_comp.sensor_schema(
         unit_of_measurement=UNIT_AMPERE,
         accuracy_decimals=3,
         device_class=DEVICE_CLASS_CURRENT,
         state_class=STATE_CLASS_MEASUREMENT,
     ),
-    CONF_TOTAL_POWER: sensor.sensor_schema(
+    CONF_TOTAL_POWER: sensor_comp.sensor_schema(
         unit_of_measurement=UNIT_WATT,
         accuracy_decimals=1,
         device_class=DEVICE_CLASS_POWER,
         state_class=STATE_CLASS_MEASUREMENT,
     ),
-    CONF_AVERAGE_SOC: sensor.sensor_schema(
+    CONF_AVERAGE_SOC: sensor_comp.sensor_schema(
         unit_of_measurement=UNIT_PERCENT,
         accuracy_decimals=0,
         device_class=DEVICE_CLASS_BATTERY,
@@ -132,5 +136,5 @@ async def to_code(config):
         cg.add(var.set_connected_binary_sensor(sens))
     for key in HUB_SENSORS:
         if conf := config.get(key):
-            sens = await sensor.new_sensor(conf)
+            sens = await sensor_comp.new_sensor(conf)
             cg.add(getattr(var, f"set_{key}_sensor")(sens))

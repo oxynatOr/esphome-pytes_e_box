@@ -1,13 +1,16 @@
+# Snippet, not a complete device config: add it to your own device YAML.
+# It needs the `external_components:` entry from the README (Installation).
+# The include paths are relative to this file: keep the packages/ folder next to it.
 packages:
   pytes_ebox_1: !include 
-    file: usr/projects/pytesebox-monitor.yaml
+    file: packages/pytesebox-monitor.yaml
     vars:
       pytes_e_box_id: pvbatt
       battery_num: 1
       cell_prefix: "Cell"
       battery_prefix: "Battery"
   pytes_ebox_2: !include 
-    file: usr/projects/pytesebox-monitor.yaml
+    file: packages/pytesebox-monitor.yaml
     vars:
       pytes_e_box_id: pvbatt
       battery_num: 2
